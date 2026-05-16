@@ -37,7 +37,6 @@ class AuthService:
         
         CandidaturaRepository.salvar_candidatura(db, candidatura)
 
-
     @staticmethod
     def login(db, dados):
 

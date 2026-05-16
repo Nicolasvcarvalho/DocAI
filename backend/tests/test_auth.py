@@ -5,9 +5,10 @@ from main import app
 
 client = TestClient(app)
 
-def test_criar_candidato():
+def test_criar_candidato_e_logar_candidato():
 
     email = f"nicolas{uuid4()}@gmail.com"
+    senha = "123"
 
     response = client.post(
         "/candidatos",
@@ -16,18 +17,17 @@ def test_criar_candidato():
             "sobrenome": "Carvalho",
             "sexo": "MASCULINO",
             "email": email,
-            "senha": "12345",
+            "senha": senha,
             "data_nascimento": "2025-10-22"
         }
     )
 
     assert response.status_code == 200
 
-def test_login():
-
+    
     response = client.post(
         "/login",
-        json={"email": "nicolas@gmail.com", "senha": "12345"}
+        json={"email": email, "senha": senha}
     )
 
     assert response.status_code == 200

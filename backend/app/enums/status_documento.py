@@ -1,0 +1,10 @@
+from enum import Enum
+
+class StatusDocumento(str, Enum):
+
+    PENDENTE_ENVIO = "PENDENTE_ENVIO"
+    ENVIADO = "ENVIADO"
+    PROCESSANDO = "PROCESSANDO"
+    PROCESSADO = "PROCESSADO"
+    APROVADO = "APROVADO"
+    REJEITADO = "REJEITADO"  

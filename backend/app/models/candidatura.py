@@ -5,8 +5,6 @@ from sqlalchemy.orm import relationship
 from app.core.database import Base
 from app.enums.status_candidatura import StatusCandidatura
 
-from app.models.candidato import Candidato
-from app.models.secretaria import Secretaria
 
 class Candidatura(Base):
 
@@ -21,5 +19,6 @@ class Candidatura(Base):
 
     candidato = relationship("Candidato", foreign_keys=[candidato_id])
     locked_by = relationship("Secretaria", foreign_keys=[locked_by_id])
+    documentos = relationship("Documento", back_populates="candidatura")
 
 

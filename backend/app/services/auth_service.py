@@ -1,9 +1,12 @@
+from fastapi import HTTPException
+
 from app.models.candidato import Candidato
 from app.models.candidatura import Candidatura
 from app.enums.status_candidatura import StatusCandidatura
-from app.core.security import gerar_hash
+from app.core.security import gerar_hash, verificar_senha, criar_acess_token
 from app.repositories.usuario_repository import UsuarioRepository
 from app.repositories.candidatura_repository import CandidaturaRepository
+from app.services.documento_service import DocumentoService
 
 class AuthService:
 
@@ -34,11 +37,30 @@ class AuthService:
         
         CandidaturaRepository.salvar_candidatura(db, candidatura)
 
-        """
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    status = Column(Enum(StatusCandidatura), nullable=False)
-    candidato_id = Column(ForeignKey("usuarios.id"), nullable=False)
-    locked_by_id = Column(ForeignKey("usuarios.id"), nullable=True)
-    locked_at = Column(DateTime, nullable=True)
-    lock_expires_at = Column(DateTime, nullable=True)
-        """
+
+    @staticmethod
+    def login(db, dados):
+
+        usuario = UsuarioRepository.buscar_email(db, dados.email)
+
+        if not usuario:
+            raise HTTPException(status_code=401, detail="Email ou senha inválidos")
+        
+        senha_valida = verificar_senha(dados.senha, usuario.senha_hash)
+
+        if not senha_valida:
+            raise HTTPException(status_code=401, detail="Email ou senha inválidos")
+
+        token = criar_acess_token({"sub": str(usuario.id), "tipo_usuario": usuario.tipo_usuario.value})
+
+        if usuario.tipo_usuario.value == "CANDIDATO":
+
+            documentos = DocumentoService.calcular_documentos_obrigatorios(usuario, db)
+
+        return {
+            "access_token": token,
+            "token_type": "bearer",
+            "tipo_usuario": usuario.tipo_usuario.value,
+            "documentos_obrigatorios": documentos
+        }
+            

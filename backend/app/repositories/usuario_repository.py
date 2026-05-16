@@ -13,3 +13,5 @@ class UsuarioRepository:
     @staticmethod
     def buscar_email(db, email: str):
         return db.query(Usuario).filter(Usuario.email==email).first()
+    
+    

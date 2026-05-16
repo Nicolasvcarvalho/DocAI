@@ -11,6 +11,8 @@ from app.models.usuario import Usuario
 from app.models.secretaria import Secretaria
 from app.models.candidato import Candidato
 from app.models.candidatura import Candidatura
+from app.models.documento import Documento
+from app.models.tipo_documento import TipoDocumento
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

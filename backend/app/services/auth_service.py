@@ -14,7 +14,7 @@ class AuthService:
     def criar_candidato(db, dados):
 
         if UsuarioRepository.buscar_email(db, dados.email):
-            raise Exception("Email já cadastrado")
+            raise HTTPException(status_code=400, detail="Email já cadastrado")
 
         senha_hash = gerar_hash(dados.senha)
 

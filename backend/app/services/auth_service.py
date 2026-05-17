@@ -3,9 +3,13 @@ from fastapi import HTTPException
 from app.models.candidato import Candidato
 from app.models.candidatura import Candidatura
 from app.enums.status_candidatura import StatusCandidatura
+
 from app.core.security import gerar_hash, verificar_senha, criar_acess_token
+
 from app.repositories.usuario_repository import UsuarioRepository
 from app.repositories.candidatura_repository import CandidaturaRepository
+from app.repositories.documento_repository import DocumentoRepository
+
 from app.services.documento_service import DocumentoService
 
 class AuthService:
@@ -37,6 +41,11 @@ class AuthService:
         
         CandidaturaRepository.salvar_candidatura(db, candidatura)
 
+        documentos_iniciais = DocumentoService.criar_documentos_iniciais(db, candidatura, candidato)
+
+        DocumentoRepository.salvar_varios(db, documentos_iniciais)
+
+
     @staticmethod
     def login(db, dados):
 
@@ -54,7 +63,7 @@ class AuthService:
 
         if usuario.tipo_usuario.value == "CANDIDATO":
 
-            documentos = DocumentoService.calcular_documentos_obrigatorios(usuario, db)
+            documentos = DocumentoService.obter_tipos_documento_obrigatorios(usuario, db)
 
         return {
             "access_token": token,

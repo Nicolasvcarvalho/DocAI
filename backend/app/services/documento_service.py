@@ -1,9 +1,27 @@
 from app.repositories.tipo_documento_repository import TipoDocumentoRepository
+from app.repositories.documento_repository import DocumentoRepository
+from app.models.documento import Documento
+from app.enums.status_documento import StatusDocumento
 
 class DocumentoService:
 
     @staticmethod
-    def calcular_documentos_obrigatorios(candidato, db):
+    def criar_documentos_iniciais(db, candidatura, candidato):
+        
+        tipos_documento = DocumentoService.obter_tipos_documento_obrigatorios(
+            candidato,
+            db
+        )
+
+        documentos = DocumentoService.montar_documentos(
+            candidatura,
+            tipos_documento
+        )
+
+        return documentos
+
+    @staticmethod
+    def obter_tipos_documento_obrigatorios(candidato, db):
         
         tipos_documentos = TipoDocumentoRepository.buscar_ativos(db)
 
@@ -29,6 +47,19 @@ class DocumentoService:
 
         return documentos_obrigatorios
 
+    @staticmethod
+    def montar_documentos(candidatura, tipos_documento):
 
+        documentos = []
 
+        for tipo in tipos_documento:
+
+            documento = Documento(
+                status = StatusDocumento.PENDENTE_ENVIO,
+                candidatura_id = candidatura.id,
+                tipo_documento_id = tipo.id
+            )
+
+            documentos.append(documento)
         
+        return documentos

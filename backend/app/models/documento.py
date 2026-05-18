@@ -16,3 +16,4 @@ class Documento(Base):
     tipo_documento_id = Column(ForeignKey("tipos_documento.id"), nullable=False)
 
     candidatura = relationship("Candidatura", back_populates="documentos")
+    tipo_documento = relationship("TipoDocumento", foreign_keys=[tipo_documento_id])

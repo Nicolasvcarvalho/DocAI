@@ -1,5 +1,6 @@
 from app.repositories.tipo_documento_repository import TipoDocumentoRepository
 from app.repositories.documento_repository import DocumentoRepository
+from app.repositories.candidatura_repository import CandidaturaRepository
 from app.models.documento import Documento
 from app.enums.status_documento import StatusDocumento
 
@@ -62,4 +63,13 @@ class DocumentoService:
 
             documentos.append(documento)
         
+        return documentos
+    
+    @staticmethod
+    def obter_contexto_documental(db, candidato):
+
+        candidatura = CandidaturaRepository.buscar_por_candidato(db, candidato.id)
+
+        documentos = DocumentoRepository.buscar_por_candidatura(db, candidatura.id)
+
         return documentos

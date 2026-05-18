@@ -14,3 +14,8 @@ class DocumentoRepository:
             db.refresh(documento)
 
         return documentos
+    
+    @staticmethod
+    def buscar_por_candidatura(db, candidatura_id):
+
+        return db.query(Documento).filter(Documento.candidatura_id == candidatura_id).all()

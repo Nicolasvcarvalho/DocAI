@@ -63,7 +63,7 @@ class AuthService:
 
         if usuario.tipo_usuario.value == "CANDIDATO":
 
-            documentos = DocumentoService.obter_tipos_documento_obrigatorios(usuario, db)
+            documentos = DocumentoService.obter_contexto_documental(db, usuario)
 
         return {
             "access_token": token,

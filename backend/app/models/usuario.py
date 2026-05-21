@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Enum, Date
+from sqlalchemy import Column, Integer, String, Enum
 from app.core.database import Base
 
 from app.enums.tipo_usuario import TipoUsuario

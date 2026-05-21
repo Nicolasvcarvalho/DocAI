@@ -14,6 +14,7 @@ class Documento(Base):
     status = Column(Enum(StatusDocumento), nullable=False)
     candidatura_id = Column(ForeignKey("candidaturas.id"), nullable=False)
     tipo_documento_id = Column(ForeignKey("tipos_documento.id"), nullable=False)
+    versao_atual_id = Column(Integer, ForeignKey("versoes_documento.id"), nullable=True)
 
     candidatura = relationship("Candidatura", back_populates="documentos")
     tipo_documento = relationship("TipoDocumento", foreign_keys=[tipo_documento_id])

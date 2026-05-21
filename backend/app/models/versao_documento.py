@@ -14,3 +14,4 @@ class VersaoDocumento(Base):
     versao = Column(Integer, nullable=False)
 
     documento = relationship("Documento", back_populates="versoes")
+    arquivos = relationship("ArquivoDocumento", back_populates="versao_documento")

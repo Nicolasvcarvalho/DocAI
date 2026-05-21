@@ -10,7 +10,6 @@ class VersaoDocumento(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     documento_id = Column(Integer, ForeignKey("documentos.id"), nullable=False)
-    ocr_resultado_id = Column(Integer, ForeignKey("ocr_resultados.id"), nullable=True)
     versao = Column(Integer, nullable=False)
 
     documento = relationship("Documento", back_populates="versoes")

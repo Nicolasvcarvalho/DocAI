@@ -9,7 +9,7 @@ class VersaoDocumento(Base):
     __tablename__ = "versoes_documento"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    documento_id = Column(Integer, ForeignKey("documentos.id"), nullable=False)
+    documento_id = Column(Integer, ForeignKey("documento.id"), nullable=False)
     versao = Column(Integer, nullable=False)
 
     documento = relationship("Documento", back_populates="versoes")

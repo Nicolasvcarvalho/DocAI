@@ -4,3 +4,7 @@ from .usuario import Usuario
 from .secretaria import Secretaria
 from .tipo_documento import TipoDocumento
 from .documento import Documento
+from .analise_documento import AnaliseDocumento
+from .ocr_resultado import OCRResultado
+from .versao_documento import VersaoDocumento
+from .arquivo_documento import ArquivoDocumento

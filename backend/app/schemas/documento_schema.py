@@ -11,3 +11,9 @@ class DocumentoResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class UploadDocumentoResponse(BaseModel):
+
+    documento_id: int
+    versao_id: int
+    status: str

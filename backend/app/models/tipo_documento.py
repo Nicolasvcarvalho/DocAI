@@ -9,6 +9,7 @@ class TipoDocumento(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     nome = Column(String, nullable=False, unique=True)
+    categoria_id = Column(Integer, ForeignKey("categorias_documento.id"), nullable=False)
     obrigatorio_base = Column(Boolean, nullable=False, default=True)
     exige_maioridade = Column(Boolean, nullable=False, default=False)
     sexo_obrigatorio = Column(Enum(Sexo), nullable=True)

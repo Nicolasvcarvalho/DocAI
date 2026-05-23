@@ -1,11 +1,13 @@
 from models.versao_documento import VersaoDocumento
 
+from app.schemas.versao_documento_schema import CriarVersaoDocumentoSchema
+
 class VersaoDocumentoRepository:
 
     @staticmethod
-    def criar(db, dados):
+    def criar(db, dados: CriarVersaoDocumentoSchema):
 
-        versao = VersaoDocumento(**dados)
+        versao = VersaoDocumento(dados)
 
         db.add(versao)
 

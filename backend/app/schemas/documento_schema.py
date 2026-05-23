@@ -17,3 +17,10 @@ class UploadDocumentoResponse(BaseModel):
     documento_id: int
     versao_id: int
     status: str
+
+class CriarDocumentoSchema(BaseModel):
+
+    status: StatusDocumento
+    candidatura_id: int
+    tipo_documento_id: int
+

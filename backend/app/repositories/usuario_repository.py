@@ -14,4 +14,6 @@ class UsuarioRepository:
     def buscar_email(db, email: str):
         return db.query(Usuario).filter(Usuario.email==email).first()
     
+    def buscar_por_id(db, usuario_id: int):
+        return db.query(Usuario).filter(Usuario.id==usuario_id).first()
     

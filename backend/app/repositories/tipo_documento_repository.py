@@ -5,3 +5,7 @@ class TipoDocumentoRepository:
     @staticmethod
     def buscar_ativos(db):
         return db.query(TipoDocumento).filter(TipoDocumento.ativo==True).all()
+    
+    @staticmethod
+    def buscar_por_id(db, tipo_documento_id: int):
+        return db.query(TipoDocumento).query(TipoDocumento.id==tipo_documento_id)

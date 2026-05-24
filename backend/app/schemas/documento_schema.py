@@ -18,7 +18,7 @@ class UploadDocumentoResponse(BaseModel):
     versao_id: int
     status: str
 
-class CriarDocumentoSchema(BaseModel):
+class DocumentoCreateSchema(BaseModel):
 
     status: StatusDocumento
     candidatura_id: int

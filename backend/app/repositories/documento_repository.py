@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
 from app.models.documento import Documento
-from app.schemas.documento_schema import CriarDocumentoSchema
+from app.schemas.documento_schema import DocumentoCreateSchema
 
 class DocumentoRepository:
     
@@ -27,7 +27,7 @@ class DocumentoRepository:
         return db.query(Documento).filter(Documento.candidatura_id==candidatura_id, Documento.tipo_documento_id==tipo_documento_id).first()
     
     @staticmethod
-    def criar(db, dados: CriarDocumentoSchema):
+    def criar(db, dados: DocumentoCreateSchema):
 
         documento = Documento(
             status=dados.status,

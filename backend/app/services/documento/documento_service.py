@@ -1,22 +1,17 @@
-from fastapi import UploadFile
-from pathlib import Path
-
 from app.repositories.tipo_documento_repository import TipoDocumentoRepository
 from app.repositories.documento_repository import DocumentoRepository
 from app.repositories.candidatura_repository import CandidaturaRepository
 from app.repositories.versao_documento_repository import VersaoDocumentoRepository
-from app.repositories.arquivo_documento_repository import ArquivoDocumentoRepository
 
-from app.services.file_storage_service import FileStorageService
+from app.services.documento.processors.processor_factory import DocumentoProcessorFactory
 
 from app.models.documento import Documento
 
 from app.enums.status_documento import StatusDocumento
-from app.enums.lado import Lado
 
 from app.schemas.documento_schema import DocumentoCreateSchema, UploadDocumentoResponse
 from app.schemas.versao_documento_schema import VersaoDocumentoCreateSchema
-from app.schemas.arquivo_documento_schema import ArquivoDocumentoCreateSchema
+from app.schemas.upload_documento_schema import DocumentoUploadInput
 
 class DocumentoService:
 
@@ -88,10 +83,10 @@ class DocumentoService:
         return documentos
     
     @staticmethod 
-    def upload_documento(db, candidatura_id: int, tipo_documento_id: int, frente: UploadFile, verso: UploadFile):
+    def upload_documento(db, candidatura_id: int, tipo_documento, arquivos: DocumentoUploadInput):
         
         documento = DocumentoRepository.buscar_por_candidatura_e_tipo(
-            db=db, candidatura_id=candidatura_id, tipo_documento_id=tipo_documento_id
+            db=db, candidatura_id=candidatura_id, tipo_documento_id=tipo_documento.id
         )
 
         if not documento:
@@ -99,7 +94,7 @@ class DocumentoService:
             documento_dados = DocumentoCreateSchema(
                 status=StatusDocumento.PENDENTE_ENVIO,
                 candidatura_id=candidatura_id,
-                tipo_documento_id=tipo_documento_id
+                tipo_documento_id=tipo_documento.id
             )
             documento = DocumentoRepository.criar(
                 db=db,
@@ -127,35 +122,9 @@ class DocumentoService:
             dados=versao_documento_dados
         )
 
-        pasta_versao = Path("storage")/"candidaturas"/f"candidatura_{candidatura_id}"/"documento_identificacao"/f"v{nova_versao}"
+        processor = DocumentoProcessorFactory.get_processor(tipo_documento.nome)
+        processor.processar_upload(db=db, documento=documento, versao_documento=versao_documento, arquivos=arquivos)
 
-        path_frente = pasta_versao/"frente.png"
-        caminho_frente = FileStorageService.salvar_arquivo(arquivo=frente, caminho=path_frente)
-
-        path_verso = pasta_versao/"verso.png"
-        caminho_verso = FileStorageService.salvar_arquivo(arquivo=verso, caminho=path_verso)
-
-        arquivo_frente_dados = ArquivoDocumentoCreateSchema(
-            versao_documento_id=versao_documento.id,
-            lado=Lado.FRENTE,
-            file_path=caminho_frente
-        )
-        ArquivoDocumentoRepository.criar(
-            db=db,
-            dados=arquivo_frente_dados
-        )
-
-        arquivo_verso_dados = ArquivoDocumentoCreateSchema(
-            versao_documento_id=versao_documento.id,
-            lado=Lado.VERSO,
-            file_path=caminho_verso
-        )
-        ArquivoDocumentoRepository.criar(
-            db=db,
-            dados=arquivo_verso_dados
-        )
-
-        # Adicionar a referencia de versao_atual na tabela de documentos
         documento.versao_atual_id = versao_documento.id
         documento.status = StatusDocumento.ENVIADO
 
@@ -166,8 +135,3 @@ class DocumentoService:
             versao_id=versao_documento.id,
             status=documento.status
         )
-
-
-
-
-        

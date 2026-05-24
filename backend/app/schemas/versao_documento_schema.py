@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-class CriarVersaoDocumentoSchema(BaseModel):
+class VersaoDocumentoCreateSchema(BaseModel):
 
     documento_id: int
     versao: int

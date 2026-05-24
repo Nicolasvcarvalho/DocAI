@@ -10,7 +10,7 @@ from app.repositories.usuario_repository import UsuarioRepository
 from app.repositories.candidatura_repository import CandidaturaRepository
 from app.repositories.documento_repository import DocumentoRepository
 
-from app.services.documento_service import DocumentoService
+from backend.app.services.documento.documento_service import DocumentoService
 
 class AuthService:
 

@@ -16,5 +16,5 @@ class DocumentoProcessorFactory:
         if not processor:
 
             raise ValueError(f"processor não encontrado para: {tipo_documento_nome}")
-        
+
         return processor

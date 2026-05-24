@@ -2,12 +2,12 @@ from sqlalchemy import func
 
 from models.versao_documento import VersaoDocumento
 
-from app.schemas.versao_documento_schema import CriarVersaoDocumentoSchema
+from app.schemas.versao_documento_schema import VersaoDocumentoCreateSchema
 
 class VersaoDocumentoRepository:
 
     @staticmethod
-    def criar(db, dados: CriarVersaoDocumentoSchema):
+    def criar(db, dados: VersaoDocumentoCreateSchema):
 
         versao = VersaoDocumento(dados)
 
@@ -21,5 +21,4 @@ class VersaoDocumentoRepository:
     def buscar_ultima_versao(db, documento_id: int):
 
         return db.query(func.max(VersaoDocumento.versao)).filter(VersaoDocumento.id==documento_id).scalar()
-    
     

@@ -1,8 +1,5 @@
 from pathlib import Path
 
-from sqlalchemy.orm import Session
-
-from app.schemas.upload_documento_schema import DocumentoUploadInput
 from app.schemas.arquivo_documento_schema import ArquivoDocumentoCreateSchema
 
 from app.repositories.arquivo_documento_repository import ArquivoDocumentoRepository

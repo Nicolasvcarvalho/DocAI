@@ -2,7 +2,7 @@ from pydantic import BaseModel
 
 from app.enums.lado import Lado
 
-class CriarArquivoDocumentoSchema(BaseModel):
+class ArquivoDocumentoCreateSchema(BaseModel):
 
     versao_documento_id: int
     lado: Lado

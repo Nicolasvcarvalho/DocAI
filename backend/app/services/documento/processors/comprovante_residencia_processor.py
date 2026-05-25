@@ -14,7 +14,7 @@ class ComprovanteResidenciaProcessor(DocumentoProcessor):
 
     def processar_upload(self, db, documento, versao_documento, arquivos):
         
-        pasta = Path("storage")/"candidaturas"/f"candidatura_{documento.candidatura_id}"/"documento_identificacao"/f"v{versao_documento.versao}"
+        pasta = Path("storage")/"candidaturas"/f"candidatura_{documento.candidatura_id}"/"comprovante_residencia"/f"v{versao_documento.versao}"
 
         caminho_arquivo = pasta/"comprovante.pdf"
 

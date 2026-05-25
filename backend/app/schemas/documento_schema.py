@@ -9,6 +9,7 @@ class DocumentoResponse(BaseModel):
     status: StatusDocumento
     tipo_documento: TipoDocumentoResponse
     exige_frente_verso: bool
+    versao_atual_id: int
 
     class Config:
         from_attributes = True

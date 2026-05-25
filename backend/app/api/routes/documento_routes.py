@@ -10,11 +10,13 @@ from app.repositories.tipo_documento_repository import TipoDocumentoRepository
 from app.repositories.candidatura_repository import CandidaturaRepository
 
 from app.schemas.upload_documento_schema import DocumentoUploadInput
+from app.schemas.documento_schema import DocumentoResponse
+
 from app.services.documento.documento_service import DocumentoService 
 
 router = APIRouter(prefix="/documentos", tags=["Documentos"])
 
-@router.post("/upload")
+@router.post("/upload", response_model=DocumentoResponse)
 def upload_documentos(
     tipo_documento_id: int = Form(...),
     frente: UploadFile | None = File(None),

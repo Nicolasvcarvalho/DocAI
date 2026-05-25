@@ -9,7 +9,7 @@ from app.models.documento import Documento
 
 from app.enums.status_documento import StatusDocumento
 
-from app.schemas.documento_schema import DocumentoCreateSchema, UploadDocumentoResponse
+from app.schemas.documento_schema import DocumentoCreateSchema
 from app.schemas.versao_documento_schema import VersaoDocumentoCreateSchema
 from app.schemas.upload_documento_schema import DocumentoUploadInput
 
@@ -130,8 +130,4 @@ class DocumentoService:
 
         db.commit()
 
-        return UploadDocumentoResponse(
-            documento_id=documento.id,
-            versao_id=versao_documento.id,
-            status=documento.status
-        )
+        return documento

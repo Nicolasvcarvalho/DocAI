@@ -1,5 +1,7 @@
 from pydantic import BaseModel
 
+from typing import Optional
+
 from app.enums.status_documento import StatusDocumento
 from .tipo_documento_schema import TipoDocumentoResponse
 
@@ -8,17 +10,10 @@ class DocumentoResponse(BaseModel):
     id: int
     status: StatusDocumento
     tipo_documento: TipoDocumentoResponse
-    exige_frente_verso: bool
-    versao_atual_id: int
+    versao_atual_id: Optional[int] = None
 
     class Config:
         from_attributes = True
-
-class UploadDocumentoResponse(BaseModel):
-
-    documento_id: int
-    versao_id: int
-    status: str
 
 class DocumentoCreateSchema(BaseModel):
 

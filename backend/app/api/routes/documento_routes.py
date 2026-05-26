@@ -78,6 +78,7 @@ async def upload_documentos(
 
     return await DocumentoService.upload_documento(
         db=db,
+        candidato=candidato,
         candidatura_id=candidatura.id,
         tipo_documento=tipo_documento,
         arquivos=upload_input 

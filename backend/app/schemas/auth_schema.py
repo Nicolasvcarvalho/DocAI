@@ -12,6 +12,14 @@ class CandidatoCreate(BaseModel):
     email: EmailStr
     senha: str
 
+class CandidatoCreateResponse(BaseModel):
+    id: int
+    nome: str
+    sobrenome: str
+    email: EmailStr
+    tipo_usuario: str
+    mensagem: str
+
 class LoginRequest(BaseModel):
     email: EmailStr
     senha: str

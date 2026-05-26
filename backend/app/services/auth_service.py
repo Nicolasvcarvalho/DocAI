@@ -2,7 +2,9 @@ from fastapi import HTTPException
 
 from app.models.candidato import Candidato
 from app.models.candidatura import Candidatura
+
 from app.enums.status_candidatura import StatusCandidatura
+from app.enums.tipo_usuario import TipoUsuario
 
 from app.core.security import gerar_hash, verificar_senha, criar_acess_token
 
@@ -10,7 +12,7 @@ from app.repositories.usuario_repository import UsuarioRepository
 from app.repositories.candidatura_repository import CandidaturaRepository
 from app.repositories.documento_repository import DocumentoRepository
 
-from backend.app.services.documento.documento_service import DocumentoService
+from app.services.documento.documento_service import DocumentoService
 
 class AuthService:
 
@@ -45,6 +47,14 @@ class AuthService:
 
         DocumentoRepository.salvar_varios(db, documentos_iniciais)
 
+        return {
+            "id": candidato.id,
+            "nome": candidato.nome,
+            "sobrenome": candidato.sobrenome,
+            "email": candidato.email,
+            "tipo_usuario": TipoUsuario.CANDIDATO,
+            "mensagem": "Candidato criado com sucesso"
+        }
 
     @staticmethod
     def login(db, dados):

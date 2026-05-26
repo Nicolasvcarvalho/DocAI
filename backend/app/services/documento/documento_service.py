@@ -10,6 +10,8 @@ from app.services.documento.validators.ownership_validator import OwnershipValid
 
 from app.models.documento import Documento
 from app.models.usuario import Usuario
+from app.models.candidatura import Candidatura
+from app.models.tipo_documento import TipoDocumento
 
 from app.enums.status_documento import StatusDocumento
 
@@ -87,25 +89,30 @@ class DocumentoService:
         return documentos
     
     @staticmethod 
-    async def upload_documento(db, candidato: Usuario, candidatura_id: int, tipo_documento, arquivos: DocumentoUploadInput):
+    async def upload_documento(db, candidato: Usuario, candidatura: Candidatura, tipo_documento: TipoDocumento, arquivos: DocumentoUploadInput) -> Documento:
+
+        OwnershipValidator.validar_candidatura_usuario(candidato, candidatura)
 
         await UploadValidator.validar_upload(arquivos)
 
         documento = DocumentoRepository.buscar_por_candidatura_e_tipo(
-            db=db, candidatura_id=candidatura_id, tipo_documento_id=tipo_documento.id
+            db=db, candidatura_id=candidatura.id, tipo_documento_id=tipo_documento.id
         )
 
         if not documento:
 
             documento_dados = DocumentoCreateSchema(
                 status=StatusDocumento.PENDENTE_ENVIO,
-                candidatura_id=candidatura_id,
+                candidatura_id=candidatura.id,
                 tipo_documento_id=tipo_documento.id
             )
             documento = DocumentoRepository.criar(
                 db=db,
                 dados=documento_dados
             )
+        
+        else:
+            OwnershipValidator.validar_documento_candidatura(documento, candidatura)
         
         ultima_versao = VersaoDocumentoRepository.buscar_ultima_versao(
             db=db,

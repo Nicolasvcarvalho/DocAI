@@ -9,7 +9,7 @@ from app.services.documento.processors.base_processor import DocumentoProcessor
 
 from app.enums.lado import Lado
 
-class DocumentoIdentificaoProcessor(DocumentoProcessor):
+class DocumentoIdentificacaoProcessor(DocumentoProcessor):
 
     def processar_upload(self, db, documento, versao_documento, arquivos):
         
@@ -18,15 +18,15 @@ class DocumentoIdentificaoProcessor(DocumentoProcessor):
         caminho_frente = pasta/"frente.png"
         caminho_verso = pasta/"verso.png"
 
-        path_frente = FileStorageService.salvar_arquivo(arquivo=arquivos.frente, caminho=caminho_frente)
-        path_verso = FileStorageService.salvar_arquivo(arquivo=arquivos.verso, caminho=caminho_verso)
+        FileStorageService.salvar_arquivo(arquivo=arquivos.frente, caminho=caminho_frente)
+        FileStorageService.salvar_arquivo(arquivo=arquivos.verso, caminho=caminho_verso)
 
         ArquivoDocumentoRepository.criar(
             db=db,
             dados=ArquivoDocumentoCreateSchema(
                 versao_documento_id=versao_documento.id,
                 lado=Lado.FRENTE,
-                file_path=path_frente
+                file_path=caminho_frente
             )
         )
 
@@ -35,6 +35,6 @@ class DocumentoIdentificaoProcessor(DocumentoProcessor):
             dados=ArquivoDocumentoCreateSchema(
                 versao_documento_id=versao_documento.id,
                 lado=Lado.VERSO,
-                file_path=path_verso
+                file_path=caminho_verso
             )
         )

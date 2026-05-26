@@ -12,5 +12,5 @@ class VersaoDocumento(Base):
     documento_id = Column(Integer, ForeignKey("documento.id"), nullable=False)
     versao = Column(Integer, nullable=False)
 
-    documento = relationship("Documento", back_populates="versoes")
+    documento = relationship("Documento", back_populates="versoes", foreign_keys=[documento_id])
     arquivos = relationship("ArquivoDocumento", back_populates="versao_documento")

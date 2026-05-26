@@ -1,6 +1,6 @@
 from sqlalchemy import func
 
-from models.versao_documento import VersaoDocumento
+from app.models.versao_documento import VersaoDocumento
 
 from app.schemas.versao_documento_schema import VersaoDocumentoCreateSchema
 
@@ -9,7 +9,7 @@ class VersaoDocumentoRepository:
     @staticmethod
     def criar(db, dados: VersaoDocumentoCreateSchema):
 
-        versao = VersaoDocumento(dados)
+        versao = VersaoDocumento(**dados.model_dump())
 
         db.add(versao)
 

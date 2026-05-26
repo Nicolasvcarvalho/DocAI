@@ -2,6 +2,8 @@ from sqlalchemy import Column, Integer, Enum, ForeignKey
 
 from sqlalchemy.orm import relationship
 
+from app.models.versao_documento import VersaoDocumento
+
 from app.core.database import Base
 from app.enums.status_documento import StatusDocumento
 
@@ -18,4 +20,4 @@ class Documento(Base):
 
     candidatura = relationship("Candidatura", back_populates="documentos")
     tipo_documento = relationship("TipoDocumento", foreign_keys=[tipo_documento_id])
-    versoes = relationship("VersaoDocumento", back_populates="documento")
+    versoes = relationship("VersaoDocumento", back_populates="documento", foreign_keys=[VersaoDocumento.documento_id])

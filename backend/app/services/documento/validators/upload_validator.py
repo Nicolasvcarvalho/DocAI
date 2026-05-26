@@ -27,18 +27,17 @@ class UploadValidator:
 
         for arquivo in opcoes_arquivos:
 
-            if arquivo is None:
+            if arquivo is not None:
                 arquivos_recebidos.append(arquivo)
 
-        UploadValidator.validar_quantidade_arquivos(arquivos_recebidos)
+        UploadValidator.__validar_quantidade_arquivos(arquivos_recebidos)
 
         for arquivo in arquivos_recebidos:
 
-            await UploadValidator.validar_arquivo(arquivo)
-
+            await UploadValidator.__validar_arquivo(arquivo)
 
     @staticmethod
-    def validar_quantidade_arquivos(arquivos: list[UploadFile]):
+    def __validar_quantidade_arquivos(arquivos: list[UploadFile]):
         
         if len(arquivos) == 0:
             raise HTTPException(status_code=400, detail="Nenhum arquivo enviado")
@@ -47,15 +46,15 @@ class UploadValidator:
             raise HTTPException(status_code=400, detail="Quantidade de arquivos inválidos")
         
     @staticmethod 
-    async def validar_arquivo(arquivo: UploadFile):
+    async def __validar_arquivo(arquivo: UploadFile):
 
-        UploadValidator.validar_extensao(arquivo)
-        UploadValidator.validar_content_type(arquivo)
+        UploadValidator.__validar_extensao(arquivo)
+        UploadValidator.__validar_content_type(arquivo)
 
-        await UploadValidator.validar_tamanho(arquivo)
+        await UploadValidator.__validar_tamanho(arquivo)
 
     @staticmethod
-    def validar_extensao(arquivo: UploadFile):
+    def __validar_extensao(arquivo: UploadFile):
 
         extensao = Path(arquivo.filename).suffix.lower()
 
@@ -63,13 +62,13 @@ class UploadValidator:
             raise HTTPException(status_code=400, detail=f"Extensão inválida: {extensao}")
         
     @staticmethod
-    def validar_content_type(arquivo: UploadFile):
+    def __validar_content_type(arquivo: UploadFile):
 
         if arquivo.content_type not in UploadValidator.ALLOWED_CONTENT_TYPES:
             raise HTTPException(status_code=400, detail="Tipo de arquivo inválido")
         
     @staticmethod
-    async def validar_tamanho(arquivo: UploadFile):
+    async def __validar_tamanho(arquivo: UploadFile):
 
         conteudo = await arquivo.read()
 
@@ -81,6 +80,5 @@ class UploadValidator:
         if tamanho > UploadValidator.MAX_FILE_SIZE:
             raise HTTPException(status_code=400, detail="Arquivo excede o tamanho máximo")
         
-        await arquivo.seek(0)
-        
+        await arquivo.seek(0)    
     

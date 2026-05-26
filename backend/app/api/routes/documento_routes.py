@@ -56,7 +56,7 @@ Esta rota não deleta documentos antigos. Ela cria uma nova **Versão** e atuali
         }
     }
 )
-def upload_documentos(
+async def upload_documentos(
     tipo_documento_id: int = Form(...),
     frente: UploadFile | None = File(None),
     verso: UploadFile | None = File(None),
@@ -76,7 +76,7 @@ def upload_documentos(
     
     upload_input = DocumentoUploadInput(frente=frente, verso=verso, arquivo=arquivo)
 
-    return DocumentoService.upload_documento(
+    return await DocumentoService.upload_documento(
         db=db,
         candidatura_id=candidatura.id,
         tipo_documento=tipo_documento,

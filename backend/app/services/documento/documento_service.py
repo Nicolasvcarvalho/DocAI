@@ -4,6 +4,7 @@ from app.repositories.candidatura_repository import CandidaturaRepository
 from app.repositories.versao_documento_repository import VersaoDocumentoRepository
 
 from app.services.documento.processors.processor_factory import DocumentoProcessorFactory
+from app.services.documento.validators.upload_validator import UploadValidator
 
 from app.models.documento import Documento
 
@@ -83,8 +84,10 @@ class DocumentoService:
         return documentos
     
     @staticmethod 
-    def upload_documento(db, candidatura_id: int, tipo_documento, arquivos: DocumentoUploadInput):
-        
+    async def upload_documento(db, candidatura_id: int, tipo_documento, arquivos: DocumentoUploadInput):
+
+        await UploadValidator.validar_upload(arquivos)
+
         documento = DocumentoRepository.buscar_por_candidatura_e_tipo(
             db=db, candidatura_id=candidatura_id, tipo_documento_id=tipo_documento.id
         )

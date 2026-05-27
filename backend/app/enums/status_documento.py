@@ -10,5 +10,3 @@ class StatusDocumento(str, Enum):
     EM_ANALISE = "EM_ANALISE"
     APROVADO = "APROVADO"
     REJEITADO = "REJEITADO" 
-
-    # Add o processado para se referir o momento em que foi  processado mas nao aanalisado   

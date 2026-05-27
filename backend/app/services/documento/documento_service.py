@@ -5,6 +5,8 @@ from app.repositories.versao_documento_repository import VersaoDocumentoReposito
 
 from app.services.documento.processors.processor_factory import DocumentoProcessorFactory
 
+from app.services.documento.workflow.status_workflow import StatusWorkflow
+
 from app.services.documento.validators.upload_validator import UploadValidator
 from app.services.documento.validators.ownership_validator import OwnershipValidator
 
@@ -139,7 +141,7 @@ class DocumentoService:
         processor.processar_upload(db=db, documento=documento, versao_documento=versao_documento, arquivos=arquivos)
 
         documento.versao_atual_id = versao_documento.id
-        documento.status = StatusDocumento.ENVIADO
+        StatusWorkflow.transicionar_status(documento, StatusDocumento.ENVIADO)
 
         db.commit()
 

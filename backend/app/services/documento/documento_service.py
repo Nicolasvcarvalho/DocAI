@@ -9,6 +9,7 @@ from app.services.documento.workflow.status_workflow import StatusWorkflow
 
 from app.services.documento.validators.upload_validator import UploadValidator
 from app.services.documento.validators.ownership_validator import OwnershipValidator
+from app.services.documento.validators.lado_documento_validator import LadoDocumentoValidator
 
 from app.models.documento import Documento
 from app.models.usuario import Usuario
@@ -96,6 +97,7 @@ class DocumentoService:
     @staticmethod 
     async def upload_documento(db, candidato: Usuario, candidatura: Candidatura, tipo_documento: TipoDocumento, arquivos: DocumentoUploadInput) -> Documento:
 
+        LadoDocumentoValidator.validar_lados_documento(tipo_documento, arquivos)
         OwnershipValidator.validar_candidatura_usuario(candidato, candidatura)
 
         await UploadValidator.validar_upload(arquivos)

@@ -14,12 +14,15 @@ from app.models.documento import Documento
 from app.models.usuario import Usuario
 from app.models.candidatura import Candidatura
 from app.models.tipo_documento import TipoDocumento
+from app.models.versao_documento import VersaoDocumento
 
 from app.enums.status_documento import StatusDocumento
 
 from app.schemas.documento_schema import DocumentoCreateSchema
 from app.schemas.versao_documento_schema import VersaoDocumentoCreateSchema
 from app.schemas.upload_documento_schema import DocumentoUploadInput
+
+from sqlalchemy.orm import Session
 
 class DocumentoService:
 
@@ -115,11 +118,25 @@ class DocumentoService:
         
         else:
             OwnershipValidator.validar_documento_candidatura(documento, candidatura)
+            StatusWorkflow.validar_reenvio(documento)
+
+
+        versao_documento = DocumentoService._criar_nova_versao(db, documento)
+
+        processor = DocumentoProcessorFactory.get_processor(tipo_documento.nome)
+        processor.processar_upload(db=db, documento=documento, versao_documento=versao_documento, arquivos=arquivos)
+
+        documento.versao_atual_id = versao_documento.id
+        StatusWorkflow.transicionar_status(documento, StatusDocumento.ENVIADO)
+
+        db.commit()
+
+        return documento
+
+    @staticmethod
+    def _criar_nova_versao(db: Session, documento: Documento) -> VersaoDocumento:
         
-        ultima_versao = VersaoDocumentoRepository.buscar_ultima_versao(
-            db=db,
-            documento_id=documento.id
-        )
+        ultima_versao = VersaoDocumentoRepository.buscar_ultima_versao(db, documento.id)
 
         if not ultima_versao:
             nova_versao = 1
@@ -137,12 +154,4 @@ class DocumentoService:
             dados=versao_documento_dados
         )
 
-        processor = DocumentoProcessorFactory.get_processor(tipo_documento.nome)
-        processor.processar_upload(db=db, documento=documento, versao_documento=versao_documento, arquivos=arquivos)
-
-        documento.versao_atual_id = versao_documento.id
-        StatusWorkflow.transicionar_status(documento, StatusDocumento.ENVIADO)
-
-        db.commit()
-
-        return documento
+        return versao_documento

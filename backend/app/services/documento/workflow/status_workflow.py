@@ -40,8 +40,14 @@ class StatusWorkflow:
         StatusDocumento.APROVADO: tuple()
     }
 
+    STATUS_PERMITEM_REENVIO = {
+
+        StatusDocumento.PENDENTE_ENVIO,
+        StatusDocumento.REJEITADO
+    }
+
     @staticmethod
-    def __validar_transicao(status_atual: StatusDocumento, novo_status: StatusDocumento):
+    def _validar_transicao(status_atual: StatusDocumento, novo_status: StatusDocumento):
         
         transicoes_permitidas = StatusWorkflow.TRANSICOES_VALIDAS.get(status_atual, tuple())
 
@@ -51,7 +57,13 @@ class StatusWorkflow:
     @staticmethod
     def transicionar_status(documento: Documento, novo_status: StatusDocumento):
 
-        StatusWorkflow.__validar_transicao(documento.status, novo_status)
+        StatusWorkflow._validar_transicao(documento.status, novo_status)
 
         documento.status = novo_status
+
+    @staticmethod
+    def validar_reenvio(documento: Documento):
+
+        if documento.status not in StatusWorkflow.STATUS_PERMITEM_REENVIO:
+            raise HTTPException(status_code=400, detail="Documento não permite reenvio no status atual: {documento.status}")
         

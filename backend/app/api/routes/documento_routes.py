@@ -22,39 +22,262 @@ router = APIRouter(prefix="/documentos", tags=["Documentos"])
     response_model=DocumentoResponse,
     summary="Upload documental",
     description="""
-Realiza o upload de arquivos para um documento específico.
+### Fluxo Operacional
 
-**Regras de Envio:**
-- **Documento Identificação:** Enviar campos `frente` e `verso`.
-- **Comprovantes/Outros:** Enviar apenas o campo `arquivo`.
+Esta rota realiza o upload dos documentos da candidatura autenticada.
 
-**Sistema de Versão:**
-Esta rota não deleta documentos antigos. Ela cria uma nova **Versão** e atualiza o ponteiro `versao_atual_id` no Documento.
+Durante o processamento são executadas validações de acesso, integridade dos arquivos, regras documentais, versionamento e atualização do workflow.
+
+---
+
+### Regras Documentais
+
+#### Documentos com frente e verso
+
+Quando o tipo documental possuir:
+
+```text
+exige_frente_verso = True
+```
+
+devem ser enviados os arquivos:
+
+* frente
+* verso
+
+Exemplos:
+
+* Documento de identificação 
+
+#### Documentos de arquivo único
+
+Quando o tipo documental possuir:
+
+```text
+exige_frente_verso = False
+```
+
+deve ser enviado apenas:
+
+* arquivo
+
+Exemplos:
+
+* Comprovante de residência
+---
+
+### Versionamento
+
+Os uploads anteriores não são substituídos.
+
+Cada novo envio gera uma nova versão do documento, preservando o histórico para fins de rastreabilidade e auditoria.
+
+---
+
+### Reenvio
+
+Em caso de rejeição, um novo upload cria uma nova versão documental.
+
+Fluxo:
+
+```text
+REJEITADO -> novo upload -> nova versão
+```
+
+---
+
+### Workflow
+
+Fluxo principal do documento:
+
+```text
+PENDENTE_ENVIO -> ENVIADO -> PROCESSANDO -> AGUARDANDO_CONFIRMACAO -> PROCESSADO -> EM_ANALISE -> APROVADO ou REJEITADO
+```
+
+---
+
+### Restrições
+
+**Extensões permitidas**
+
+* .png
+* .jpg
+* .jpeg
+
+**MIME Types permitidos**
+
+* image/png
+* image/jpeg
+
+**Tamanho máximo**
+
+* 10 MB
+
+---
+
+### Controle de acesso
+
+Antes do upload, o sistema valida:
+
+* se a candidatura pertence ao usuário autenticado;
+* se o documento pertence à candidatura informada;
+* se o usuário possui permissão para acessar o recurso.
+
+Caso alguma validação falhe, o upload é interrompido antes do início do processamento documental.
+
 """,
     responses={
-        200: {"model": DocumentoResponse, "description": "Upload processado com sucesso."},
-        401: {
-            "model": HTTPErrorResponse,
-            "description": "Usuário não autenticado.",
-            "content": {"application/json": {"example": {"detail": "Not authenticated"}}}
-        },
-        404: {
-            "model": HTTPErrorResponse,
-            "description": "Recurso não encontrado.",
-            "content": {
-                "application/json": {
-                    "examples": {
-                        "Candidatura": {"value": {"detail": "Candidatura não encontrada"}},
-                        "Tipo Documental": {"value": {"detail": "Tipo documental não encontrado"}}
+
+    200: {
+        "model": DocumentoResponse,
+        "description": (
+            "Upload processado com sucesso."
+        )
+    },
+
+    400: {
+        "model": HTTPErrorResponse,
+        "description": (
+            "Erro operacional documental."
+        ),
+        "content": {
+            "application/json": {
+                "examples": {
+
+                    "Nenhum Arquivo": {
+                        "value": {
+                            "detail": (
+                                "Nenhum arquivo enviado."
+                            )
+                        }
+                    },
+
+                    "Extensao Invalida": {
+                        "value": {
+                            "detail": (
+                                "Extensão inválida: .exe"
+                            )
+                        }
+                    },
+
+                    "Tipo Arquivo Invalido": {
+                        "value": {
+                            "detail": (
+                                "Tipo de arquivo inválido."
+                            )
+                        }
+                    },
+
+                    "Arquivo Vazio": {
+                        "value": {
+                            "detail": (
+                                "Arquivo vazio."
+                            )
+                        }
+                    },
+
+                    "Arquivo Muito Grande": {
+                        "value": {
+                            "detail": (
+                                "Arquivo excede tamanho máximo."
+                            )
+                        }
+                    },
+
+                    "Frente Verso Obrigatorio": {
+                        "value": {
+                            "detail": (
+                                "Documento exige frente e verso."
+                            )
+                        }
+                    },
+
+                    "Arquivo Unico Obrigatorio": {
+                        "value": {
+                            "detail": (
+                                "Documento exige arquivo único."
+                            )
+                        }
+                    },
+
+                    "Workflow Invalido": {
+                        "value": {
+                            "detail": (
+                                "Transição de status inválida."
+                            )
+                        }
                     }
                 }
             }
-        },
-        400: {
-            "model": HTTPErrorResponse,
-            "description": "Erro na lógica de arquivos (ex: enviou 'arquivo' para RG).",
+        }
+    },
+
+    401: {
+        "model": HTTPErrorResponse,
+        "description": (
+            "Usuário não autenticado."
+        ),
+        "content": {
+            "application/json": {
+                "example": {
+                    "detail": (
+                        "Not authenticated"
+                    )
+                }
+            }
+        }
+    },
+
+    403: {
+        "model": HTTPErrorResponse,
+        "description": (
+            "Usuário não possui acesso ao recurso."
+        ),
+        "content": {
+            "application/json": {
+                "examples": {
+
+                    "Ownership Invalido": {
+                        "value": {
+                            "detail": (
+                                "Usuário não possui acesso a esta candidatura."
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    },
+
+    404: {
+        "model": HTTPErrorResponse,
+        "description": (
+            "Recurso não encontrado."
+        ),
+        "content": {
+            "application/json": {
+                "examples": {
+
+                    "Candidatura": {
+                        "value": {
+                            "detail": (
+                                "Candidatura não encontrada"
+                            )
+                        }
+                    },
+
+                    "Tipo Documental": {
+                        "value": {
+                            "detail": (
+                                "Tipo documental não encontrado"
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
+}
 )
 async def upload_documentos(
     tipo_documento_id: int = Form(...),
@@ -79,7 +302,7 @@ async def upload_documentos(
     return await DocumentoService.upload_documento(
         db=db,
         candidato=candidato,
-        candidatura_id=candidatura.id,
+        candidatura=candidatura,
         tipo_documento=tipo_documento,
         arquivos=upload_input 
     )

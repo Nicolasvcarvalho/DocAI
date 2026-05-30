@@ -6,7 +6,8 @@ from app.schemas.upload_documento_schema import DocumentoUploadInput
 
 class UploadValidator:
 
-    MAX_FILE_SIZE = 10 * 24 * 1024
+    MB = 1024 * 1024
+    MAX_FILE_SIZE = 10 * MB
 
     ALLOWED_EXTENSIONS = {
         ".png",
@@ -43,7 +44,7 @@ class UploadValidator:
             raise HTTPException(status_code=400, detail="Nenhum arquivo enviado")
         
         if len(arquivos) > 2:
-            raise HTTPException(status_code=400, detail="Quantidade de arquivos inválidos")
+            raise HTTPException(status_code=400, detail="Quantidade de arquivos inválida")
         
     @staticmethod 
     async def _validar_arquivo(arquivo: UploadFile):

@@ -30,12 +30,12 @@ class DocumentoService:
     @staticmethod
     def criar_documentos_iniciais(db, candidatura, candidato):
         
-        tipos_documento = DocumentoService.obter_tipos_documento_obrigatorios(
+        tipos_documento = DocumentoService._obter_tipos_documento_obrigatorios(
             candidato,
             db
         )
 
-        documentos = DocumentoService.montar_documentos(
+        documentos = DocumentoService._montar_documentos(
             candidatura,
             tipos_documento
         )
@@ -70,7 +70,7 @@ class DocumentoService:
         return documentos_obrigatorios
 
     @staticmethod
-    def montar_documentos(candidatura, tipos_documento):
+    def _montar_documentos(candidatura, tipos_documento):
 
         documentos = []
 

@@ -65,5 +65,5 @@ class StatusWorkflow:
     def validar_reenvio(documento: Documento):
 
         if documento.status not in StatusWorkflow.STATUS_PERMITEM_REENVIO:
-            raise HTTPException(status_code=400, detail="Documento não permite reenvio no status atual: {documento.status}")
+            raise HTTPException(status_code=400, detail=f"Documento não permite reenvio no status atual: {documento.status}")
         

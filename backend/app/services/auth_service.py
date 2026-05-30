@@ -37,7 +37,7 @@ class AuthService:
         UsuarioRepository.salvar_candidato(db, candidato)
 
         candidatura = Candidatura(
-            status=StatusCandidatura.PENDENTE_ENVIO,
+            status=StatusCandidatura.AGUARDANDO_DOCUMENTOS,
             candidato_id=candidato.id
             )
         

@@ -26,7 +26,7 @@ class DocumentoIdentificacaoProcessor(DocumentoProcessor):
             dados=ArquivoDocumentoCreateSchema(
                 versao_documento_id=versao_documento.id,
                 lado=Lado.FRENTE,
-                file_path=caminho_frente
+                file_path=str(caminho_frente)
             )
         )
 
@@ -35,6 +35,6 @@ class DocumentoIdentificacaoProcessor(DocumentoProcessor):
             dados=ArquivoDocumentoCreateSchema(
                 versao_documento_id=versao_documento.id,
                 lado=Lado.VERSO,
-                file_path=caminho_verso
+                file_path=str(caminho_verso)
             )
         )

@@ -52,7 +52,7 @@ class StatusWorkflow:
         transicoes_permitidas = StatusWorkflow.TRANSICOES_VALIDAS.get(status_atual, tuple())
 
         if novo_status not in transicoes_permitidas:
-            raise HTTPException(status_code=400, detail=f"Transição de status inválidas: {status_atual} -> {novo_status}")
+            raise HTTPException(status_code=400, detail=f"Transição de status inválida: {status_atual} -> {novo_status}")
         
     @staticmethod
     def transicionar_status(documento: Documento, novo_status: StatusDocumento):

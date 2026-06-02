@@ -23,5 +23,5 @@ class ComprovanteResidenciaProcessor(DocumentoProcessor):
         ArquivoDocumentoRepository.criar(db=db, dados=ArquivoDocumentoCreateSchema(
             versao_documento_id=versao_documento.id,
             lado=Lado.UNICO,
-            file_path=path_arquivo
+            file_path=str(path_arquivo)
         ))

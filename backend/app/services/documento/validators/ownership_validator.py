@@ -10,7 +10,7 @@ class OwnershipValidator:
     def validar_candidatura_usuario(usuario: Usuario, candidatura: Candidatura):
         
         if candidatura.candidato_id != usuario.id:
-            raise HTTPException(status_code=403, detail="Você não possui acesso a esta candidatura")
+            raise HTTPException(status_code=403, detail="Usuário não possui acesso a esta candidatura")
     
     @staticmethod
     def validar_documento_candidatura(documento: Documento, candidatura: Candidatura):

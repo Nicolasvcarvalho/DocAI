@@ -43,7 +43,7 @@ class DocumentoService:
         return documentos
 
     @staticmethod
-    def obter_tipos_documento_obrigatorios(candidato, db):
+    def _obter_tipos_documento_obrigatorios(candidato, db):
         
         tipos_documentos = TipoDocumentoRepository.buscar_ativos(db)
 

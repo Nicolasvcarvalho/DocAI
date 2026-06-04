@@ -22,3 +22,7 @@ class VersaoDocumentoRepository:
 
         return db.query(func.max(VersaoDocumento.versao)).filter(VersaoDocumento.id==documento_id).scalar()
     
+    @staticmethod
+    def buscar_por_id(db, versao_documento_id: int):
+        
+        return db.query(VersaoDocumento).filter(VersaoDocumento.id==versao_documento_id).first()

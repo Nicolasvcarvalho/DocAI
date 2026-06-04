@@ -14,3 +14,4 @@ class VersaoDocumento(Base):
 
     documento = relationship("Documento", back_populates="versoes", foreign_keys=[documento_id])
     arquivos = relationship("ArquivoDocumento", back_populates="versao_documento")
+    ocr_resultado = relationship("OCRResultado", back_populates="versao_documento")

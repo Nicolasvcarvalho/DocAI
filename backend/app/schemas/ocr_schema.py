@@ -5,7 +5,7 @@ from typing import Optional
 class OCRResultadoBaseSchema(BaseModel):
 
     texto_extraido: Optional[str] = None
-    dados_extraidos: Optional[dict] = None
+    dados_json: Optional[dict] = None
 
 class OCRResultadoCreateSchema(OCRResultadoBaseSchema):
 

@@ -20,7 +20,7 @@ class OCRService:
         DATA NASCIMENTO: 01/01/2000
         """
 
-        dados_extraidos = {
+        dados_json = {
             "nome": "JOAO TESTE",
             "cpf": "12345678900",
             "data_nascimento": "2000-01-01"
@@ -30,7 +30,7 @@ class OCRService:
 
         if resultado_existente:
 
-            schema_update_ocr_resultado = OCRResultadoUpdateSchema(texto_extraido=texto_extraido, dados_json=dados_extraidos)
+            schema_update_ocr_resultado = OCRResultadoUpdateSchema(texto_extraido=texto_extraido, dados_json=dados_json)
             OCRResultadoRepository.atualizar_dados(resultado=resultado_existente, dados=schema_update_ocr_resultado)
 
         else:
@@ -38,7 +38,7 @@ class OCRService:
             schema_create_ocr_resultado = OCRResultadoCreateSchema(
                 versao_documento_id=versao_documento.id,
                 texto_extraido=texto_extraido,
-                dados_json=dados_extraidos
+                dados_json=dados_json
                 )
             OCRResultadoRepository.criar(db=db, dados=schema_create_ocr_resultado)
 

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, File, Form, UploadFile, HTTPException
+from fastapi import APIRouter, Depends, File, Form, UploadFile, HTTPException, BackgroundTasks
 
 from sqlalchemy.orm import Session
 
@@ -16,6 +16,7 @@ from app.schemas.candidatura_dashboard_schema import CandidaturaDashboardRespons
 
 from app.services.documento.documento_service import DocumentoService 
 from app.services.documento.presenters.candidatura_dashboard_presenter import CandidaturaDashboardPresenter
+from app.services.documento.background.ocr_tasks import OCRTasks
 
 from app.models.usuario import Usuario
 
@@ -298,6 +299,7 @@ Caso alguma validação falhe, o upload é interrompido antes do início do proc
 }
 )
 async def upload_documentos(
+    background_tasks: BackgroundTasks,
     tipo_documento_id: int = Form(...),
     frente: UploadFile | None = File(None),
     verso: UploadFile | None = File(None),
@@ -317,13 +319,17 @@ async def upload_documentos(
     
     upload_input = DocumentoUploadInput(frente=frente, verso=verso, arquivo=arquivo)
 
-    return await DocumentoService.upload_documento(
+    resultado_upload = await DocumentoService.upload_documento(
         db=db,
         candidato=candidato,
         candidatura=candidatura,
         tipo_documento=tipo_documento,
         arquivos=upload_input 
     )
+
+    background_tasks.add_task(OCRTasks.processar_documento, resultado_upload.versao_atual_id)
+
+    return resultado_upload
 
 @router.get(
     "/dashboard",

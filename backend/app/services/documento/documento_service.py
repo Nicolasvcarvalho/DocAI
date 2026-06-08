@@ -157,3 +157,4 @@ class DocumentoService:
         )
 
         return versao_documento
+    

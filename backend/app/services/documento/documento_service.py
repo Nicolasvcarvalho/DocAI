@@ -86,14 +86,6 @@ class DocumentoService:
         
         return documentos
     
-    @staticmethod
-    def obter_contexto_documental(db, candidato):
-
-        candidatura = CandidaturaRepository.buscar_por_candidato(db, candidato.id)
-        documentos = DocumentoRepository.buscar_por_candidatura(db, candidatura.id)
-
-        return documentos
-    
     @staticmethod 
     async def upload_documento(db, candidato: Usuario, candidatura: Candidatura, tipo_documento: TipoDocumento, arquivos: DocumentoUploadInput) -> Documento:
 

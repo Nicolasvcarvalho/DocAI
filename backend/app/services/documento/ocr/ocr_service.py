@@ -18,12 +18,15 @@ class OCRService:
         NOME: JOAO TESTE
         CPF: 12345678900
         DATA NASCIMENTO: 01/01/2000
+        FILIACAO: NOME PAI E NOME MAE
         """
 
         dados_json = {
             "nome": "JOAO TESTE",
             "cpf": "12345678900",
-            "data_nascimento": "2000-01-01"
+            "data_nascimento": "2000-01-01",
+            "nome_pai": "exemplo",
+            "nome_mae": "exemplo"
         }
 
         resultado_existente = OCRResultadoRepository.buscar_por_versao(db, versao_documento_id=versao_documento.id)

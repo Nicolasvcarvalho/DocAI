@@ -8,6 +8,7 @@ from app.dependencies.auth import get_usuario_logado
 
 from app.repositories.tipo_documento_repository import TipoDocumentoRepository
 from app.repositories.candidatura_repository import CandidaturaRepository
+from app.repositories.documento_repository import DocumentoRepository
 
 from app.schemas.upload_documento_schema import DocumentoUploadInput
 from app.schemas.documento_schema import DocumentoResponse
@@ -17,6 +18,8 @@ from app.schemas.candidatura_dashboard_schema import CandidaturaDashboardRespons
 from app.services.documento.documento_service import DocumentoService 
 from app.services.documento.presenters.candidatura_dashboard_presenter import CandidaturaDashboardPresenter
 from app.services.documento.background.ocr_tasks import OCRTasks
+from app.services.documento.permissions.DocumentoPermission import DocumentoPermission
+from app.services.documento.review.ocr_review_service import OCRReviewService
 
 from app.models.usuario import Usuario
 
@@ -332,7 +335,7 @@ async def upload_documentos(
     return resultado_upload
 
 @router.get(
-    "/dashboard",
+    "/dashboard-candidato",
     response_model=CandidaturaDashboardResponse,
     summary="Obter dashboard documental da candidatura",
     description="""
@@ -603,3 +606,12 @@ def obter_dashboard_documental(candidato: Usuario = Depends(get_usuario_logado),
         raise HTTPException(status_code=404, detail="Candidatura não encontrada")
 
     return CandidaturaDashboardPresenter.montar_dashboard(candidatura)
+
+@router.get("/documentos/{documento_id}/ocr")
+def buscar_dados_ocr(documento_id: int, db: Session = Depends(get_db), usuario=Depends(get_usuario_logado)):
+
+    documento = DocumentoRepository.buscar_por_id(db, documento_id)
+
+    DocumentoPermission.validar_acesso(documento=documento, usuario=usuario)
+
+    return OCRReviewService.buscar_dados_ocr(db=db, documento=documento)

@@ -2,7 +2,7 @@ from app.models.candidatura import Candidatura
 
 from app.services.documento.workflow.candidatura_workflow import CandidaturaWorkflowService
 from app.services.documento.calculators.progresso_documental_calculator import ProgressoDocumentalCalculator
-from app.services.documento.permissions.documento_permission_service import DocumentoPermissionService
+from backend.app.services.documento.permissions.DocumentoActionService import DocumentoPermissionService
 
 class CandidaturaDashboardPresenter:
 

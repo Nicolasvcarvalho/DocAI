@@ -40,3 +40,8 @@ class DocumentoRepository:
         db.flush()
 
         return documento
+    
+    @staticmethod
+    def buscar_por_id(db, documento_id: int):
+
+        return db.query(Documento).filter(Documento.id==documento_id).first()

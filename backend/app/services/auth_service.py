@@ -14,6 +14,8 @@ from app.repositories.documento_repository import DocumentoRepository
 
 from app.services.documento.documento_service import DocumentoService
 
+from app.schemas.auth_schema import UsuarioAutenticadoResponse
+
 class AuthService:
 
     @staticmethod
@@ -71,14 +73,14 @@ class AuthService:
 
         token = criar_acess_token({"sub": str(usuario.id), "tipo_usuario": usuario.tipo_usuario.value})
 
-        if usuario.tipo_usuario.value == "CANDIDATO":
-
-            documentos = DocumentoService.obter_contexto_documental(db, usuario)
-
         return {
             "access_token": token,
             "token_type": "bearer",
-            "tipo_usuario": usuario.tipo_usuario.value,
-            "documentos_obrigatorios": documentos
+            "usuario": UsuarioAutenticadoResponse(
+                id=usuario.id,
+                nome=usuario.nome,
+                sobrenome=usuario.sobrenome,
+                tipo_usuario=usuario.tipo_usuario
+            )
         }
             

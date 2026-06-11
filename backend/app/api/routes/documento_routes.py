@@ -14,12 +14,15 @@ from app.schemas.upload_documento_schema import DocumentoUploadInput
 from app.schemas.documento_schema import DocumentoResponse
 from app.schemas.base import HTTPErrorResponse
 from app.schemas.candidatura_dashboard_schema import CandidaturaDashboardResponse
+from app.schemas.ocr_review_schema import ConfirmacaoOCRSchema
 
 from app.services.documento.documento_service import DocumentoService 
 from app.services.documento.presenters.candidatura_dashboard_presenter import CandidaturaDashboardPresenter
 from app.services.documento.background.ocr_tasks import OCRTasks
 from app.services.documento.permissions.DocumentoPermission import DocumentoPermission
 from app.services.documento.review.ocr_review_service import OCRReviewService
+from app.services.documento.validators.ocr_validator_factory import OCRValidatorFactory
+from app.services.documento.review.confirmacao_ocr_service import ConfirmacaoOCRService
 
 from app.models.usuario import Usuario
 
@@ -615,3 +618,16 @@ def buscar_dados_ocr(documento_id: int, db: Session = Depends(get_db), usuario=D
     DocumentoPermission.validar_acesso(documento=documento, usuario=usuario)
 
     return OCRReviewService.buscar_dados_ocr(db=db, documento=documento)
+
+@router.post("/documentos/{documento_id}/confirmar-ocr")
+def confirmar_ocr(documento_id: int, dados: ConfirmacaoOCRSchema, db: Session = Depends(get_db), usuario=Depends(get_usuario_logado)):
+
+    documento = DocumentoRepository.buscar_por_id(db=db, documento_id=documento_id)
+
+    DocumentoPermission.validar_acesso(documento=documento, usuario=usuario)
+
+    validator = OCRValidatorFactory.obter_validator(documento.tipo_documento)
+
+    validator.validar(dados.dados_corrigidos)
+
+    return ConfirmacaoOCRService.confirmar_ocr(db=db, documento=documento, dados_corrigidos=dados.dados_corrigidos)

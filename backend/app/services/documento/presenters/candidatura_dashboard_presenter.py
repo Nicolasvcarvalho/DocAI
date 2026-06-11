@@ -19,6 +19,7 @@ class CandidaturaDashboardPresenter:
                 "id": documento.id,
                 "nome": documento.tipo_documento.nome,
                 "status": documento.status,
+                "aceita_frente_verso": documento.tipo_documento.exige_frente_verso,
                 "acoes": DocumentoPermissionService.obter_acoes_permitidas(documento)
             })            
 

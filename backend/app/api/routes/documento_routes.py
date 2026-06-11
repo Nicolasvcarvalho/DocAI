@@ -542,8 +542,9 @@ mantendo o frontend desacoplado das regras institucionais.
   "documentos": [
     {
       "id": 1,
-      "nome": "RG",
+      "nome": "DOCUMENTO_IDENTIFICACAO",
       "status": "REJEITADO",
+      "aceita_frente_verso": "True"
 
       "acoes": {
         "pode_visualizar_arquivo": true,

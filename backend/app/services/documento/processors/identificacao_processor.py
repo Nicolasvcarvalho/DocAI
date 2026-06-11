@@ -15,8 +15,11 @@ class DocumentoIdentificacaoProcessor(DocumentoProcessor):
         
         pasta = Path("storage")/"candidaturas"/f"candidatura_{documento.candidatura_id}"/"documento_identificacao"/f"v{versao_documento.versao}"
 
-        caminho_frente = pasta/"frente.png"
-        caminho_verso = pasta/"verso.png"
+        extensao_frente = Path(arquivos.frente.filename).suffix.lower()
+        extensao_verso = Path(arquivos.verso.filename).suffix.lower()
+
+        caminho_frente = pasta/f"frente{extensao_frente}"
+        caminho_verso = pasta/f"verso{extensao_verso}"
 
         FileStorageService.salvar_arquivo(arquivo=arquivos.frente, caminho=caminho_frente)
         FileStorageService.salvar_arquivo(arquivo=arquivos.verso, caminho=caminho_verso)

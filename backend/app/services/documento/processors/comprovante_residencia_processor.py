@@ -16,7 +16,8 @@ class ComprovanteResidenciaProcessor(DocumentoProcessor):
         
         pasta = Path("storage")/"candidaturas"/f"candidatura_{documento.candidatura_id}"/"comprovante_residencia"/f"v{versao_documento.versao}"
 
-        caminho_arquivo = pasta/"comprovante.pdf"
+        extensao_arquivo = Path(arquivos.arquivo.filename).suffix.lower()
+        caminho_arquivo = pasta/f"comprovante{extensao_arquivo}"
 
         path_arquivo = FileStorageService.salvar_arquivo(arquivo=arquivos.arquivo, caminho=caminho_arquivo)
 

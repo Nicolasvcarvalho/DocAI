@@ -33,6 +33,6 @@ class OCRReviewService:
 
         db.commit()
 
-        db.refresh()
+        db.refresh(resultado)
 
         return resultado

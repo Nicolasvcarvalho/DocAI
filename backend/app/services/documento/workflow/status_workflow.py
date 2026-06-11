@@ -21,10 +21,6 @@ class StatusWorkflow:
         ),
 
         StatusDocumento.AGUARDANDO_CONFIRMACAO: (
-            StatusDocumento.PROCESSADO
-        ),
-
-        StatusDocumento.PROCESSADO: (
             StatusDocumento.EM_ANALISE
         ),
 

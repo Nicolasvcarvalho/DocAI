@@ -18,6 +18,7 @@ class CandidaturaDashboardPresenter:
             documentos.append({
                 "id": documento.id,
                 "nome": documento.tipo_documento.nome,
+                "tipo_documento_id": documento.tipo_documento.id,
                 "status": documento.status,
                 "aceita_frente_verso": documento.tipo_documento.exige_frente_verso,
                 "acoes": DocumentoPermissionService.obter_acoes_permitidas(documento)

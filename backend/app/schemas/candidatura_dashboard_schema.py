@@ -15,6 +15,7 @@ class DocumentoDashboardResponse(BaseModel):
 
     id: int
     nome: str
+    tipo_documento_id: int
     status: StatusDocumento
     aceita_frente_verso: bool
     acoes: DocumentoAcoesResponse

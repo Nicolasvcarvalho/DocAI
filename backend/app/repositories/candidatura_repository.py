@@ -16,3 +16,7 @@ class CandidaturaRepository:
 
         return db.query(Candidatura).filter(Candidatura.candidato_id == candidato_id).first()
     
+    @staticmethod
+    def listar(db):
+
+        return db.query(Candidatura).all()

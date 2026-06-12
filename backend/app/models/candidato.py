@@ -7,7 +7,7 @@ from app.enums.tipo_usuario import TipoUsuario
 
 class Candidato(Usuario):
     
-    data_nascimento = Column(Date, nullable=False)
+    data_nascimento = Column(Date, nullable=True)
     sexo = Column(Enum(Sexo), nullable=True)
 
     __mapper_args__ = {

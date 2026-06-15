@@ -20,9 +20,14 @@ class ProgressoDocumentalCalculator:
             if documento.status==StatusDocumento.APROVADO
         ])
 
-        rejeitados = len([
+        precisam_reenvio = len([
             documento for documento in documentos
-            if documento.status==StatusDocumento.REJEITADO
+            if documento.status==StatusDocumento.AGUARDANDO_REENVIO
+        ])
+
+        reenviados = len([
+            documento for documento in candidatura.documentos
+            if len(documento.versoes) > 1
         ])
 
         percentual = 0
@@ -34,6 +39,7 @@ class ProgressoDocumentalCalculator:
             "total": total,
             "enviados": enviados,
             "aprovados": aprovados,
-            "rejeitados": rejeitados,
+            "rejeitados": precisam_reenvio,
+            "reenviados": reenviados,
             "percentual": percentual
         }

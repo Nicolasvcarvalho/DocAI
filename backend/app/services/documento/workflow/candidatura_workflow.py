@@ -16,28 +16,25 @@ class CandidaturaWorkflowService:
         
         documentos_obrigatorios = [documento for documento in documentos if documento.tipo_documento.obrigatorio_base]
 
-        todos_aprovados = all(documento.status==StatusDocumento.APROVADO for documento in documentos_obrigatorios)
-        algum_em_analise = any(documento.status==StatusDocumento.EM_ANALISE for documento in documentos_obrigatorios)
-        algum_processando = any(
-            documento.status in [StatusDocumento.ENVIADO, StatusDocumento.PROCESSANDO, StatusDocumento.AGUARDANDO_CONFIRMACAO]
-            for documento in documentos_obrigatorios
-            )
-        algum_rejeitado = any(documento.status==StatusDocumento.REJEITADO for documento in documentos_obrigatorios)
-        algum_pendente_envio = any(documento.status==StatusDocumento.PENDENTE_ENVIO for documento in documentos_obrigatorios)
-        
-        if algum_pendente_envio:
+        status_presentes = {documento.status for documento in documentos_obrigatorios}
+
+        status_esperando_candidato = {StatusDocumento.PENDENTE_ENVIO, StatusDocumento.AGUARDANDO_REENVIO}
+
+        if status_presentes.intersection(status_esperando_candidato):
             return StatusCandidatura.AGUARDANDO_DOCUMENTOS
-        
-        if algum_processando:
-            return StatusCandidatura.DOCUMENTACAO_EM_PROCESSAMENTO
-        
-        if algum_em_analise:
-            return StatusCandidatura.EM_ANALISE
-        
-        if algum_rejeitado:
+
+        if StatusDocumento.PENDENTE_ENVIO in status_presentes:
             return StatusCandidatura.DOCUMENTACAO_PENDENTE
         
-        if todos_aprovados:
+        status_processamento = {StatusDocumento.ENVIADO, StatusDocumento.PROCESSANDO, StatusDocumento.AGUARDANDO_CONFIRMACAO}
+
+        if status_presentes.intersection(status_processamento):
+            return StatusCandidatura.DOCUMENTACAO_EM_PROCESSAMENTO
+        
+        if StatusDocumento.EM_ANALISE in status_presentes:
+            return StatusCandidatura.EM_ANALISE if candidatura.possui_analista else StatusCandidatura.DOCUMENTACAO_PENDENTE
+        
+        if StatusDocumento.APROVADO == status_presentes:
             return StatusCandidatura.APROVADA
         
-        return StatusCandidatura.DOCUMENTACAO_PENDENTE
+        raise ValueError(f"Status de documentos não mapeado: {status_presentes}")

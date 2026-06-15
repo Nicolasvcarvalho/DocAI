@@ -1,5 +1,5 @@
-from app.services.documento.validators.doc_identificacao_ocr_validator import DocumentoIdentificacaoOCRValidator
-from app.services.documento.validators.doc_residencia_ocr_validator import ComprovanteResidenciaOCRValidator
+from app.services.documento.validators.identificacao_ocr_validator import DocumentoIdentificacaoOCRValidator
+from app.services.documento.validators.residencia_ocr_validator import ComprovanteResidenciaOCRValidator
 
 from app.models.tipo_documento import TipoDocumento
 

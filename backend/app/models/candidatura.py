@@ -4,6 +4,7 @@ from sqlalchemy.orm import relationship
 
 from app.core.database import Base
 from app.enums.status_candidatura import StatusCandidatura
+from app.enums.status_documento import StatusDocumento
 
 
 class Candidatura(Base):
@@ -21,4 +22,10 @@ class Candidatura(Base):
     locked_by = relationship("Secretaria", foreign_keys=[locked_by_id])
     documentos = relationship("Documento", back_populates="candidatura")
 
-
+    @property
+    def possui_analista(self):
+        return self.locked_by_id is not None
+    
+    @property
+    def esta_disponivel(self):
+        return not self.possui_analista and self.status==StatusCandidatura.DOCUMENTACAO_PENDENTE

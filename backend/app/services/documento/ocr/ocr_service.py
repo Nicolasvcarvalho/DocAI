@@ -7,7 +7,7 @@ from app.schemas.ocr_schema import OCRResultadoCreateSchema
 
 from app.models.versao_documento import VersaoDocumento
 
-from app.services.documento.workflow.status_workflow import StatusWorkflow
+from app.services.documento.workflow.documento_status_workflow import DocumentoStatusWorkflow
 
 class OCRService:
 
@@ -45,6 +45,6 @@ class OCRService:
                 )
             OCRResultadoRepository.criar(db=db, dados=schema_create_ocr_resultado)
 
-        StatusWorkflow.transicionar_status(documento=versao_documento.documento, novo_status=StatusDocumento.AGUARDANDO_CONFIRMACAO)
+        DocumentoStatusWorkflow.transicionar_status_documento(db=db, documento=versao_documento.documento, novo_status=StatusDocumento.AGUARDANDO_CONFIRMACAO)
 
         db.commit()

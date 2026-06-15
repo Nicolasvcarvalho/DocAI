@@ -3,7 +3,7 @@ from app.core.database import SessionLocal
 from app.repositories.versao_documento_repository import VersaoDocumentoRepository
 
 from app.services.documento.ocr.ocr_service import OCRService
-from app.services.documento.workflow.status_workflow import StatusWorkflow
+from app.services.documento.workflow.documento_status_workflow import DocumentoStatusWorkflow
 
 from app.enums.status_documento import StatusDocumento
 
@@ -21,7 +21,7 @@ class OCRTasks:
             if not versao_documento:
                 return
             
-            StatusWorkflow.transicionar_status(documento=versao_documento.documento, novo_status=StatusDocumento.PROCESSANDO)
+            DocumentoStatusWorkflow.transicionar_status_documento(db=db, documento=versao_documento.documento, novo_status=StatusDocumento.PROCESSANDO)
             
             db.commit()
 

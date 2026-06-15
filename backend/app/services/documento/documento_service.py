@@ -5,7 +5,7 @@ from app.repositories.versao_documento_repository import VersaoDocumentoReposito
 
 from app.services.documento.processors.processor_factory import DocumentoProcessorFactory
 
-from app.services.documento.workflow.status_workflow import StatusWorkflow
+from app.services.documento.workflow.documento_status_workflow import DocumentoStatusWorkflow
 
 from app.services.documento.validators.upload_validator import UploadValidator
 from app.services.documento.validators.ownership_validator import OwnershipValidator
@@ -112,7 +112,7 @@ class DocumentoService:
         
         else:
             OwnershipValidator.validar_documento_candidatura(documento, candidatura)
-            StatusWorkflow.validar_reenvio(documento)
+            DocumentoStatusWorkflow.validar_reenvio(documento)
 
 
         versao_documento = DocumentoService._criar_nova_versao(db, documento)
@@ -121,7 +121,7 @@ class DocumentoService:
         processor.processar_upload(db=db, documento=documento, versao_documento=versao_documento, arquivos=arquivos)
 
         documento.versao_atual_id = versao_documento.id
-        StatusWorkflow.transicionar_status(documento, StatusDocumento.ENVIADO)
+        DocumentoStatusWorkflow.transicionar_status_documento(db, documento, StatusDocumento.ENVIADO)
 
         db.commit()
 

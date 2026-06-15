@@ -1,9 +1,10 @@
-import json
-from ...processors.RG import RG
+from processors.RG import RG
 import os
+import pandas as pd
 import cv2 as cv
-def extrai_rg(path_da_imagem: str, raw_data: bool = False) -> str:
-    """Recebe o caminho de uma imagem de um RG e devolve o json com os dados dela. """
+def extrai_rg(path_da_imagem: str, raw_data: bool = False) -> tuple[str,str]:
+    """Recebe o caminho de uma imagem de um RG e devolve o json com os dados dela. Se o parâmetro raw_data for True, também devolve um json
+    com a extração bruta dos dados numa tupla (dados_filtrados,dados_brutos) """
     if not os.path.exists(path_da_imagem): raise FileNotFoundError(f"Arquivo não encontrado: {path_da_imagem}")
 
     rg = cv.imread(path_da_imagem)
@@ -12,8 +13,16 @@ def extrai_rg(path_da_imagem: str, raw_data: bool = False) -> str:
     
     rg = RG(rg)
 
-    rg_json = json.dumps(rg.ExportarDict(),ensure_ascii=False,indent=4,default=str)
-    return rg_json
+    rg_json = pd.DataFrame([rg.ExportarDict()])
+    rg_json = rg_json.to_json(orient='records',force_ascii=False,indent=4)
+
+    if(raw_data):
+        raw_json = rg.ExtracaoOCR()
+        raw_json = raw_json.drop('Box',axis=1)
+        raw_json = raw_json.to_json(orient='records',force_ascii=False,indent=4)
+        return (rg_json,raw_json)
+    else: return (rg_json,"")
+
 
 def extrai_compres(path_da_imagem: str) -> str:
     """Recebe o caminho de uma imagem de um Comprovante de Residência e devolve o json com os dados dele. """

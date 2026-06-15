@@ -11,7 +11,11 @@ from app.core.security import SECRET_KEY, ALGORITHM
 
 from app.repositories.usuario_repository import UsuarioRepository
 
-oauth2_schema = OAuth2PasswordBearer(tokenUrl="/login")
+from app.models.usuario import Usuario
+
+from app.enums.tipo_usuario import TipoUsuario
+
+oauth2_schema = OAuth2PasswordBearer(tokenUrl="/autenticacao/login_swegger")
 
 def get_usuario_logado(token: str = Depends(oauth2_schema), db: Session = Depends(get_db)):
 
@@ -30,3 +34,16 @@ def get_usuario_logado(token: str = Depends(oauth2_schema), db: Session = Depend
     
     return usuario
     
+def get_secretaria_logada(usuario: Usuario = Depends(get_usuario_logado)) -> Usuario:
+
+    if usuario.tipo_usuario != TipoUsuario.SECRETARIA:
+        raise HTTPException(status_code=403, detail="Acesso permitido apenas para secretarias.")
+    
+    return usuario
+
+def get_candidato_logado(usuario: Usuario = Depends(get_usuario_logado)) -> Usuario:
+
+    if usuario.tipo_usuario != TipoUsuario.CANDIDATO:
+        raise HTTPException(status_code=403, detail="Acesso permitido apenas para candidatos.")
+    
+    return usuario

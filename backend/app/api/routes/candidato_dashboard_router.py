@@ -21,263 +21,429 @@ router = APIRouter(prefix="/candidaturas", tags=["Dashboard Candidato"])
     response_model=CandidaturaDashboardResponse,
     summary="Obter dashboard documental da candidatura",
     description="""
-Retorna o contexto documental completo da candidatura do usuário autenticado.
+    Retorna o contexto documental completo da candidatura do usuário autenticado.
 
-A rota consolida informações operacionais e institucionais da candidatura,
-permitindo que o frontend renderize o estado atual do processo documental
-sem precisar implementar regras de negócio localmente.
+    A rota consolida informações operacionais e institucionais da candidatura,
+    permitindo que o frontend renderize o estado atual do processo documental
+    sem precisar implementar regras de negócio localmente.
 
-O dashboard inclui:
+    O dashboard inclui:
 
-- status global da candidatura
-- progresso documental
-- documentos da candidatura
-- permissões e ações disponíveis por documento
+    * status global da candidatura
+    * progresso documental
+    * documentos da candidatura
+    * permissões e ações disponíveis por documento
 
----
+    ---
 
-## Workflow da candidatura
+    ## Workflow da candidatura
 
-Fluxo principal:
+    Fluxo principal:
 
-```text
-AGUARDANDO_DOCUMENTOS
-↓
-DOCUMENTACAO_EM_PROCESSAMENTO
-↓
-DOCUMENTACAO_PENDENTE
-↓
-EM_ANALISE
-↓
-APROVADA
-```
+    ```text
+    AGUARDANDO_DOCUMENTOS
+    ↓
+    DOCUMENTACAO_EM_PROCESSAMENTO
+    ↓
+    DOCUMENTACAO_PENDENTE
+    ↓
+    EM_ANALISE
+    ↓
+    APROVADA
+    ```
 
-Fluxo de correção documental:
+    Fluxo de correção documental:
 
-```text
-EM_ANALISE
-↓
-DOCUMENTACAO_PENDENTE
-↓
-DOCUMENTACAO_EM_PROCESSAMENTO
-```
+    ```text
+    EM_ANALISE
+    ↓
+    DOCUMENTACAO_PENDENTE
+    ↓
+    AGUARDANDO_DOCUMENTOS
+    ↓
+    DOCUMENTACAO_EM_PROCESSAMENTO
+    ↓
+    DOCUMENTACAO_PENDENTE
+    ```
 
-Fluxo final irreversível:
+    Fluxo final irreversível:
 
-```text
-EM_ANALISE
-↓
-INDEFERIDA
-```
+    ```text
+    EM_ANALISE
+    ↓
+    INDEFERIDA
+    ```
 
----
+    ---
 
-## Status da candidatura
+    ## Como o status da candidatura é calculado
 
-### AGUARDANDO_DOCUMENTOS
+    O status da candidatura é derivado automaticamente a partir dos documentos obrigatórios.
 
-A candidatura ainda não possui todos os documentos obrigatórios enviados.
+    O backend recalcula esse status sempre que ocorre uma transição documental.
 
----
+    Exemplos:
 
-### DOCUMENTACAO_EM_PROCESSAMENTO
+    ### AGUARDANDO_DOCUMENTOS
 
-Todos os documentos obrigatórios foram enviados e o sistema está executando:
+    Existe pelo menos um documento obrigatório em:
 
-- OCR
-- validações
-- processamento técnico
-- detecção de inconsistências
+    ```text
+    PENDENTE_ENVIO
+    ```
 
----
+    ou
 
-### DOCUMENTACAO_PENDENTE
+    ```text
+    AGUARDANDO_REENVIO
+    ```
 
-O processamento técnico foi concluído e a candidatura aguarda:
+    O candidato ainda precisa realizar alguma ação.
 
-- análise institucional
-- correção documental
-- reenvio de documentos
+    ---
 
----
+    ### DOCUMENTACAO_EM_PROCESSAMENTO
 
-### EM_ANALISE
+    Todos os documentos foram enviados, porém existe pelo menos um documento em:
 
-A candidatura está sob análise ativa da secretaria.
+    ```text
+    ENVIADO
+    ```
 
----
+    ou
 
-### APROVADA
+    ```text
+    PROCESSANDO
+    ```
 
-Todos os documentos foram validados e a candidatura foi aprovada institucionalmente.
+    ou
 
----
+    ```text
+    AGUARDANDO_CONFIRMACAO
+    ```
 
-### INDEFERIDA
+    O sistema ainda está processando a documentação.
 
-A candidatura foi recusada de forma definitiva.
+    ---
 
----
+    ### DOCUMENTACAO_PENDENTE
 
-## Workflow documental
+    Existe pelo menos um documento em:
 
-Cada documento possui um workflow próprio:
+    ```text
+    EM_ANALISE
+    ```
 
-```text
-PENDENTE_ENVIO
-↓
-ENVIADO
-↓
-PROCESSANDO
-↓
-AGUARDANDO_CONFIRMACAO
-↓
-EM_ANALISE
-↓
-APROVADO | REJEITADO
-```
+    mas a candidatura ainda não foi assumida por uma secretaria.
 
----
+    Nesse estado a candidatura está disponível para análise institucional.
 
-## Progresso documental
+    ---
 
-O objeto `progresso` fornece métricas utilizadas pelo frontend para:
+    ### EM_ANALISE
 
-- barras de progresso
-- indicadores percentuais
-- pendências documentais
-- acompanhamento do processo
+    Existe pelo menos um documento em:
 
-Exemplo:
+    ```text
+    EM_ANALISE
+    ```
 
-```json
-{
-  "total": 5,
-  "enviados": 5,
-  "aprovados": 3,
-  "rejeitados": 1,
-  "percentual": 60
-}
-```
+    e a candidatura já foi assumida por uma secretaria através do mecanismo de lock.
 
----
+    ---
 
-## Ações permitidas
+    ### APROVADA
 
-Cada documento possui um conjunto de ações permitidas baseado no seu estado atual.
+    Todos os documentos obrigatórios encontram-se em:
 
-Exemplo:
+    ```text
+    APROVADO
+    ```
 
-```json
-{
-  "pode_visualizar_arquivo": true,
-  "pode_enviar_documento": false,
-  "pode_reenviar_documento": true,
-  "pode_confirmar_ocr": false,
-  "pode_editar_dados_ocr": false
-}
-```
+    ---
 
-Essas permissões permitem que o frontend renderize corretamente:
+    ### INDEFERIDA
 
-- botões
-- bloqueios
-- CTAs
-- estados visuais
-- ações disponíveis
+    A candidatura foi encerrada institucionalmente e não poderá prosseguir no fluxo.
 
-sem replicar regras de negócio localmente.
+    ---
 
----
+    ## Workflow documental
 
-## Arquitetura
+    Cada documento possui um workflow próprio.
 
-O dashboard é montado utilizando:
+    Fluxo principal:
 
-- workflow services
-- calculators
-- permission services
-- presenters
+    ```text
+    PENDENTE_ENVIO
+    ↓
+    ENVIADO
+    ↓
+    PROCESSANDO
+    ↓
+    AGUARDANDO_CONFIRMACAO
+    ↓
+    EM_ANALISE
+    ↓
+    APROVADO
+    ```
 
-Toda a lógica de workflow permanece centralizada no backend,
-mantendo o frontend desacoplado das regras institucionais.
+    Fluxo de correção:
 
----
+    ```text
+    EM_ANALISE
+    ↓
+    AGUARDANDO_REENVIO
+    ↓
+    ENVIADO
+    ↓
+    PROCESSANDO
+    ↓
+    AGUARDANDO_CONFIRMACAO
+    ↓
+    EM_ANALISE
+    ```
 
-## Exemplo de resposta
+    ---
 
-```json
-{
-  "status_candidatura": "DOCUMENTACAO_PENDENTE",
+    ## Status dos documentos
 
-  "progresso": {
+    ### PENDENTE_ENVIO
+
+    O documento ainda não foi enviado pelo candidato.
+
+    ---
+
+    ### ENVIADO
+
+    O upload foi concluído com sucesso.
+
+    ---
+
+    ### PROCESSANDO
+
+    O documento está sendo processado internamente.
+
+    Exemplos:
+
+    * OCR
+    * validações técnicas
+    * extração de dados
+
+    ---
+
+    ### AGUARDANDO_CONFIRMACAO
+
+    O OCR foi concluído e o sistema aguarda confirmação ou correção dos dados extraídos.
+
+    ---
+
+    ### EM_ANALISE
+
+    O documento está disponível para análise da secretaria.
+
+    ---
+
+    ### APROVADO
+
+    O documento foi validado institucionalmente.
+
+    ---
+
+    ### AGUARDANDO_REENVIO
+
+    O documento apresentou inconsistências e o candidato precisa enviar uma nova versão.
+
+    O histórico anterior permanece preservado através do sistema de versionamento documental.
+
+    ---
+
+    ## Progresso documental
+
+    O objeto `progresso` fornece métricas utilizadas pelo frontend para:
+
+    * barras de progresso
+    * indicadores percentuais
+    * acompanhamento do processo
+    * exibição de pendências documentais
+
+    Exemplo:
+
+    ```json
+    {
     "total": 5,
     "enviados": 5,
     "aprovados": 3,
-    "rejeitados": 1,
+    "aguardando_reenvio": 1,
+    "reenviados": 1,
     "percentual": 60
-  },
-
-  "documentos": [
-    {
-      "id": 1,
-      "nome": "DOCUMENTO_IDENTIFICACAO",
-      "status": "REJEITADO",
-      "aceita_frente_verso": "True"
-
-      "acoes": {
-        "pode_visualizar_arquivo": true,
-        "pode_enviar_documento": false,
-        "pode_reenviar_documento": true,
-        "pode_confirmar_ocr": false,
-        "pode_editar_dados_ocr": false
-      }
     }
-  ]
-}
-```
-""",
+    ```
+
+    Onde:
+
+    ### total
+
+    Quantidade total de documentos da candidatura.
+
+    ### enviados
+
+    Quantidade de documentos que já saíram do estado `PENDENTE_ENVIO`.
+
+    ### aprovados
+
+    Quantidade de documentos aprovados institucionalmente.
+
+    ### aguardando_reenvio
+
+    Quantidade de documentos aguardando ação do candidato.
+
+    ### reenviados
+
+    Quantidade de documentos que já possuem mais de uma versão registrada.
+
+    ### percentual
+
+    Percentual de documentos aprovados em relação ao total.
+
+    ---
+
+    ## Ações permitidas
+
+    Cada documento possui um conjunto de ações permitidas baseado em seu estado atual.
+
+    Exemplo:
+
+    ```json
+    {
+    "pode_visualizar_arquivo": true,
+    "pode_enviar_documento": false,
+    "pode_reenviar_documento": true,
+    "pode_confirmar_ocr": false,
+    "pode_editar_dados_ocr": false
+    }
+    ```
+
+    Essas permissões permitem que o frontend renderize corretamente:
+
+    * botões
+    * estados visuais
+    * bloqueios
+    * CTAs
+    * ações disponíveis
+
+    sem precisar reproduzir regras de negócio localmente.
+
+    ---
+
+    ## Arquitetura
+
+    O dashboard é construído utilizando:
+
+    * Workflow Services
+    * Calculators
+    * Permission Services
+    * Presenters
+
+    Toda a lógica de workflow permanece centralizada no backend,
+    mantendo o frontend desacoplado das regras institucionais.
+
+    ---
+
+    ## Exemplo de resposta
+
+    ```json
+    {
+    "status_candidatura": "DOCUMENTACAO_PENDENTE",
+
+    "progresso": {
+        "total": 2,
+        "enviados": 2,
+        "aprovados": 0,
+        "aguardando_reenvio": 0,
+        "reenviados": 0,
+        "percentual": 0
+    },
+
+    "documentos": [
+        {
+        "id": 5,
+        "nome": "DOCUMENTO_IDENTIFICACAO",
+        "tipo_documento_id": 1,
+        "status": "EM_ANALISE",
+        "aceita_frente_verso": true,
+
+        "acoes": {
+            "pode_visualizar_arquivo": true,
+            "pode_enviar_documento": false,
+            "pode_reenviar_documento": false,
+            "pode_confirmar_ocr": false,
+            "pode_editar_dados_ocr": false
+        }
+        }
+    ]
+    }
+    ```
+
+    """,
     responses={
 
-        200: {
-            "model": CandidaturaDashboardResponse,
-            "description": (
-                "Dashboard documental retornado com sucesso."
-            )
-        },
+    200: {
+        "model": CandidaturaDashboardResponse,
+        "description": (
+            "Dashboard documental retornado com sucesso."
+        )
+    },
 
-        401: {
-            "model": HTTPErrorResponse,
-            "description": (
-                "Usuário não autenticado."
-            ),
-            "content": {
-                "application/json": {
-                    "example": {
-                        "detail": (
-                            "Not authenticated"
-                        )
-                    }
+    401: {
+        "model": HTTPErrorResponse,
+        "description": (
+            "Usuário não autenticado."
+        ),
+        "content": {
+            "application/json": {
+                "example": {
+                    "detail": (
+                        "Not authenticated"
+                    )
                 }
             }
-        },
+        }
+    },
 
-        404: {
-            "model": HTTPErrorResponse,
-            "description": (
-                "Candidatura não encontrada."
-            ),
-            "content": {
-                "application/json": {
-                    "example": {
-                        "detail": (
-                            "Candidatura não encontrada"
+    404: {
+        "model": HTTPErrorResponse,
+        "description": (
+            "Candidatura não encontrada."
+        ),
+        "content": {
+            "application/json": {
+                "example": {
+                    "detail": (
+                        "Candidatura não encontrada"
+                    )
+                }
+            }
+        }
+    },
+
+    500: {
+        "model": HTTPErrorResponse,
+        "description": (
+            "Estado documental inconsistente."
+        ),
+        "content": {
+            "application/json": {
+                "example": {
+                    "detail": (
+                        "Status de documentos não mapeado"
                         )
                     }
                 }
             }
         }
     }
+
 )
 def obter_dashboard_documental(candidato: Usuario = Depends(get_candidato_logado), db: Session = Depends(get_db)):
     

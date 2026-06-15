@@ -8,6 +8,7 @@ from app.schemas.ocr_schema import OCRResultadoCreateSchema
 from app.models.versao_documento import VersaoDocumento
 
 from app.services.documento.workflow.documento_status_workflow import DocumentoStatusWorkflow
+from app.services.documento.ocr.Utils import extrai_rg
 
 class OCRService:
 
@@ -16,18 +17,13 @@ class OCRService:
 
         texto_extraido = """
         NOME: JOAO TESTE
-        CPF: 12345678900
+        CPF: 12345678900,
+        RG: 4567890
         DATA NASCIMENTO: 01/01/2000
         FILIACAO: NOME PAI E NOME MAE
         """
 
-        dados_json = {
-            "nome": "JOAO TESTE",
-            "cpf": "12345678900",
-            "data_nascimento": "2000-01-01",
-            "nome_pai": "exemplo",
-            "nome_mae": "exemplo"
-        }
+        dados_json = extrai_rg(versao_documento.arquivos)
 
         resultado_existente = OCRResultadoRepository.buscar_por_versao(db, versao_documento_id=versao_documento.id)
 

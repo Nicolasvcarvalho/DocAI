@@ -300,13 +300,10 @@ class RG(Documento):
 
     def ExportarDict(self) -> dict:
         return {
-            "Registro Geral": self.registro_geral,
-            "Nome do Candidato": self.nome_candidato,
-            "Nome do Pai": self.nome_pai,
-            "Nome da Mãe": self.nome_mae,
-            "Naturalidade": self.naturalidade,
-            "Data de Nascimento": self.data_nascimento,
-            "Data de Expedição": self.data_expedicao,
-            "CPF": self.cpf,
-            "Órgão Emissor": self.orgao_emissor
+            "nome": self.nome_candidato,
+            "rg": self.registro_geral,
+            "cpf": self.cpf,
+            "data_nascimento": self.data_nascimento,
+            "nome_pai": self.nome_pai,
+            "nome_mae": self.nome_mae,
         }

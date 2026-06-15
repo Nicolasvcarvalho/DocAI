@@ -17,6 +17,23 @@ class CandidaturaRepository:
         return db.query(Candidatura).filter(Candidatura.candidato_id == candidato_id).first()
     
     @staticmethod
-    def listar(db):
+    def listar_disponiveis_para_analise(db):
 
-        return db.query(Candidatura).all()
+        candidaturas = db.query(Candidatura).all()
+
+        resultado = []
+
+        for candidatura in candidaturas:
+            
+            print(
+                f"id={candidatura.id}",
+                f"status_banco={candidatura.status}",
+                f"possui_analista={candidatura.possui_analista}",
+                f"esta_disponivel={candidatura.esta_disponivel}"
+                )
+
+            if candidatura.esta_disponivel:
+                
+                resultado.append(candidatura)
+
+        return resultado

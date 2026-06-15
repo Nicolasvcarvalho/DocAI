@@ -1,7 +1,8 @@
-from processors.RG import RG
+from app.services.documento.processors.RG import RG
 import os
 import pandas as pd
 import cv2 as cv
+
 def extrai_rg(path_da_imagem: str, raw_data: bool = False) -> tuple[str,str]:
     """Recebe o caminho de uma imagem de um RG e devolve o json com os dados dela. Se o parâmetro raw_data for True, também devolve um json
     com a extração bruta dos dados numa tupla (dados_filtrados,dados_brutos) """

@@ -4,8 +4,9 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 import cv2 as cv
-from Documento import Documento
 import matplotlib.pyplot as plt
+
+from app.services.documento.processors.Documento import Documento
 
 class RG(Documento):
     def __init__(self, imagem: np.ndarray) -> None:

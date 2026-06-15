@@ -8,22 +8,16 @@ from app.schemas.ocr_schema import OCRResultadoCreateSchema
 from app.models.versao_documento import VersaoDocumento
 
 from app.services.documento.workflow.documento_status_workflow import DocumentoStatusWorkflow
-from app.services.documento.ocr.Utils import extrai_rg
+from app.services.documento.ocr.ocr_extractor_factory import OCRExtractorFactory
 
 class OCRService:
 
     @staticmethod
     def executar_ocr_documentos(db, versao_documento: VersaoDocumento):
 
-        texto_extraido = """
-        NOME: JOAO TESTE
-        CPF: 12345678900,
-        RG: 4567890
-        DATA NASCIMENTO: 01/01/2000
-        FILIACAO: NOME PAI E NOME MAE
-        """
+        extractor = OCRExtractorFactory.obter_extractor(versao_documento.documento.tipo_documento.nome)
 
-        dados_json = extrai_rg(versao_documento.arquivos)
+        dados_json, texto_extraido = extractor.executar(versao_documento)
 
         resultado_existente = OCRResultadoRepository.buscar_por_versao(db, versao_documento_id=versao_documento.id)
 

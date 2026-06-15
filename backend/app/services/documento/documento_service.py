@@ -113,10 +113,9 @@ class DocumentoService:
         else:
             OwnershipValidator.validar_documento_candidatura(documento, candidatura)
             DocumentoStatusWorkflow.validar_reenvio(documento)
-
-
-        versao_documento = DocumentoService._criar_nova_versao(db, documento)
-
+        
+        versao_documento = DocumentoService._criar_nova_versao(db, documento)   
+             
         processor = DocumentoProcessorFactory.get_processor(tipo_documento.nome)
         processor.processar_upload(db=db, documento=documento, versao_documento=versao_documento, arquivos=arquivos)
 

@@ -10,7 +10,8 @@ class ArquivoDocumentoRepository:
         arquivo = ArquivoDocumento(
             versao_documento_id=dados.versao_documento_id,
             lado=dados.lado,
-            file_path=dados.file_path
+            file_path=dados.file_path, 
+            mime_type=dados.mime_type
         )
 
         db.add(arquivo)
@@ -18,3 +19,8 @@ class ArquivoDocumentoRepository:
         db.flush()
 
         return arquivo
+    
+    @staticmethod
+    def buscar_por_id(db, arquivo_id: int):
+
+        return db.query(ArquivoDocumento).filter(ArquivoDocumento.id == arquivo_id).first()

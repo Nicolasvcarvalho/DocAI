@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends
 
+from textwrap import dedent
+
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -20,7 +22,7 @@ router = APIRouter(prefix="/ocr", tags=["OCR"])
 @router.get(
         "/documentos/{documento_id}",
         summary="Obter dados extraídos pelo OCR",
-        description="""
+        description=dedent("""
         Retorna os dados extraídos pelo mecanismo de OCR para um documento específico.
 
         Esta rota é utilizada durante a etapa de revisão documental, permitindo que o frontend exiba ao usuário os dados que foram identificados automaticamente a partir da imagem enviada.
@@ -196,7 +198,7 @@ router = APIRouter(prefix="/ocr", tags=["OCR"])
         }
         ```
 
-        """,
+        """),
         responses={
 
         200: {
@@ -278,95 +280,117 @@ def buscar_dados_ocr(documento_id: int, db: Session = Depends(get_db), usuario=D
 @router.post(
         "/documentos/{documento_id}/confirmar",
         summary="Confirmar ou corrigir dados extraídos pelo OCR",
-        description="""
-        Permite que o candidato revisar, corrigir e confirmar os dados extraídos automaticamente pelo OCR.
+        description=dedent("""
+Permite que o candidato revisar, corrigir e confirmar os dados extraídos automaticamente pelo OCR.
 
-        Após a confirmação, o documento é enviado para análise da secretaria e a candidatura é sincronizada automaticamente.
+Após a confirmação, o documento é enviado para análise da secretaria e a candidatura é sincronizada automaticamente.
 
-        Objetivo da rota
+---
 
-        A rota é responsável por:
+## Objetivo da rota
 
-        validar acesso ao documento;
-        validar os dados informados;
-        atualizar o resultado OCR;
-        alterar o status do documento;
-        sincronizar o status da candidatura.
-        Quando utilizar
+A rota é responsável por:
 
-        Esta rota deve ser utilizada quando o documento estiver no status:
+* validar acesso ao documento;
+* validar os dados informados;
+* atualizar o resultado OCR;
+* alterar o status do documento;
+* sincronizar o status da candidatura.
 
-        AGUARDANDO_CONFIRMACAO
+---
 
-        Fluxo:
+## Quando utilizar
 
-        Upload
-        ↓
-        OCR
-        ↓
-        AGUARDANDO_CONFIRMACAO
-        ↓
-        Confirmação do candidato
-        ↓
-        EM_ANALISE
-        Controle de acesso
-        Secretaria
+Esta rota deve ser utilizada quando o documento estiver no status:
 
-        Pode acessar qualquer documento.
+```text
+AGUARDANDO_CONFIRMACAO
+```
 
-        Candidato
+---
 
-        Pode acessar apenas documentos pertencentes à própria candidatura.
+## Fluxo da operação
 
-        Validação dos dados
+```text
+Upload
+↓
+OCR
+↓
+AGUARDANDO_CONFIRMACAO
+↓
+Confirmação do candidato
+↓
+EM_ANALISE
+```
 
-        Os campos obrigatórios variam conforme o tipo documental.
+---
 
-        Documento de Identificação
+## Controle de acesso
 
-        Campos obrigatórios:
+### Secretaria
 
-        nome
-        cpf
-        data_nascimento
-        nome_pai
-        nome_mae
+Pode acessar qualquer documento.
 
-        Exemplo:
+### Candidato
 
-        {
-        "dados_corrigidos": {
-            "nome": "João Silva",
-            "cpf": "12345678900",
-            "data_nascimento": "2000-01-01",
-            "nome_pai": "José Silva",
-            "nome_mae": "Maria Silva"
-        }
-        }
-        Comprovante de Residência
+Pode acessar apenas documentos pertencentes à própria candidatura.
 
-        Campos obrigatórios:
+---
 
-        logradouro
-        numero
-        bairro
-        cidade
-        estado
-        cep
+## Validação dos dados
 
-        Exemplo:
+Os campos obrigatórios variam conforme o tipo documental.
 
-        {
-        "dados_corrigidos": {
-            "logradouro": "Rua das Flores",
-            "numero": "123",
-            "bairro": "Centro",
-            "cidade": "Fortaleza",
-            "estado": "CE",
-            "cep": "60000-000"
-            }
-        }
-    """,
+### Documento de Identificação
+
+Campos obrigatórios:
+
+* nome
+* cpf
+* data_nascimento
+* nome_pai
+* nome_mae
+
+Exemplo:
+
+```json
+{
+  "dados_corrigidos": {
+    "nome": "João Silva",
+    "cpf": "12345678900",
+    "data_nascimento": "2000-01-01",
+    "nome_pai": "José Silva",
+    "nome_mae": "Maria Silva"
+  }
+}
+```
+
+### Comprovante de Residência
+
+Campos obrigatórios:
+
+* logradouro
+* numero
+* bairro
+* cidade
+* estado
+* cep
+
+Exemplo:
+
+```json
+{
+  "dados_corrigidos": {
+    "logradouro": "Rua das Flores",
+    "numero": "123",
+    "bairro": "Centro",
+    "cidade": "Fortaleza",
+    "estado": "CE",
+    "cep": "60000-000"
+  }
+}
+```
+"""),
     responses={
     200: {
         "description": (

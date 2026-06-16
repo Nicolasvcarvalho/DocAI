@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 
+from textwrap import dedent
+
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -20,7 +22,7 @@ router = APIRouter(prefix="/candidaturas", tags=["Dashboard Candidato"])
     "/dashboard",
     response_model=CandidaturaDashboardResponse,
     summary="Obter dashboard documental da candidatura",
-    description="""
+    description=dedent("""
     Retorna o contexto documental completo da candidatura do usuário autenticado.
 
     A rota consolida informações operacionais e institucionais da candidatura,
@@ -385,7 +387,7 @@ router = APIRouter(prefix="/candidaturas", tags=["Dashboard Candidato"])
     }
     ```
 
-    """,
+    """),
     responses={
 
     200: {

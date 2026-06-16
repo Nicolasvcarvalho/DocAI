@@ -4,8 +4,6 @@ from sqlalchemy.orm import relationship
 
 from app.core.database import Base
 from app.enums.status_candidatura import StatusCandidatura
-from app.enums.status_documento import StatusDocumento
-
 
 class Candidatura(Base):
 

@@ -1,6 +1,12 @@
 from app.models.candidatura import Candidatura
+from datetime import datetime, UTC, timedelta
 
 class CandidaturaRepository:
+
+    @staticmethod
+    def buscar_por_id(db, candidatura_id):
+        
+        return db.query(Candidatura).filter(Candidatura.id == candidatura_id).first()
 
     @staticmethod
     def salvar_candidatura(db, candidatura):
@@ -37,3 +43,23 @@ class CandidaturaRepository:
                 resultado.append(candidatura)
 
         return resultado
+    
+    @staticmethod
+    def liberar_lock(candidatura):
+
+        candidatura.locked_by_id = None
+        candidatura.locked_at = None
+        candidatura.lock_expires_at = None
+
+        return candidatura
+
+    @staticmethod
+    def assumir(candidatura, secretaria_id):
+
+        agora = datetime.now(UTC)
+
+        candidatura.locked_by_id = secretaria_id
+        candidatura.locked_at = agora
+        candidatura.lock_expires_at = agora + timedelta(minutes=30)
+
+        return candidatura

@@ -7,7 +7,7 @@ from app.repositories.arquivo_documento_repository import ArquivoDocumentoReposi
 from app.services.file_storage_service import FileStorageService
 from app.services.documento.processors.base_processor import DocumentoProcessor
 
-from app.enums.lado import Lado
+from app.enums.lado_documento import Lado
 
 class DocumentoIdentificacaoProcessor(DocumentoProcessor):
 
@@ -29,7 +29,8 @@ class DocumentoIdentificacaoProcessor(DocumentoProcessor):
             dados=ArquivoDocumentoCreateSchema(
                 versao_documento_id=versao_documento.id,
                 lado=Lado.FRENTE,
-                file_path=str(caminho_frente)
+                file_path=str(caminho_frente),
+                mime_type=arquivos.frente.content_type
             )
         )
 
@@ -38,6 +39,7 @@ class DocumentoIdentificacaoProcessor(DocumentoProcessor):
             dados=ArquivoDocumentoCreateSchema(
                 versao_documento_id=versao_documento.id,
                 lado=Lado.VERSO,
-                file_path=str(caminho_verso)
+                file_path=str(caminho_verso),
+                mime_type=arquivos.verso.content_type
             )
         )

@@ -8,7 +8,7 @@ from app.schemas.arquivo_documento_schema import ArquivoDocumentoCreateSchema
 
 from app.repositories.arquivo_documento_repository import ArquivoDocumentoRepository
 
-from app.enums.lado import Lado
+from app.enums.lado_documento import Lado
 
 class ComprovanteResidenciaProcessor(DocumentoProcessor):
 
@@ -24,5 +24,6 @@ class ComprovanteResidenciaProcessor(DocumentoProcessor):
         ArquivoDocumentoRepository.criar(db=db, dados=ArquivoDocumentoCreateSchema(
             versao_documento_id=versao_documento.id,
             lado=Lado.UNICO,
-            file_path=str(path_arquivo)
+            file_path=str(path_arquivo),
+            mime_type=arquivos.arquivo.content_type
         ))

@@ -21,3 +21,4 @@ class Documento(Base):
     candidatura = relationship("Candidatura", back_populates="documentos")
     tipo_documento = relationship("TipoDocumento", foreign_keys=[tipo_documento_id])
     versoes = relationship("VersaoDocumento", back_populates="documento", foreign_keys=[VersaoDocumento.documento_id])
+    versao_atual = relationship("VersaoDocumento", foreign_keys=[versao_atual_id], uselist=False)

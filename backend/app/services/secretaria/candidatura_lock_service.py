@@ -57,7 +57,6 @@ class CandidaturaLockService:
         if candidatura.status in [
             StatusCandidatura.APROVADA,
             StatusCandidatura.AGUARDANDO_DOCUMENTOS,
-            StatusCandidatura.DOCUMENTACAO_PENDENTE
         ]:
 
             CandidaturaRepository.liberar_lock(candidatura)

@@ -83,18 +83,14 @@ class ComprovanteResidencia(Documento):
         img_temp = self.imagem.copy()
         img_temp = self.CorrigirOrientacao(img_temp)
         
-        # 1. Expandido para 65% para garantir a captura de faturas mais longas
         alt, larg = img_temp.shape[:2]
         img_temp = img_temp[0:int(alt * 0.65), 0:larg]
         
         if len(img_temp.shape) == 3:
             img_temp = cv.cvtColor(img_temp, cv.COLOR_BGR2GRAY)
 
-        # 2. Ampliação Cúbica Limpa. Inter_Cubic suaviza as fontes sem o efeito de serrilhado
         img_temp = cv.resize(img_temp, None, fx=2.0, fy=2.0, interpolation=cv.INTER_CUBIC)
 
-        # 3. Ajuste de Contraste Leve. 
-        # Sem Sharpening ou Denoising pesado, o que evita que "0" vire "8" e evita destruição da imagem Comp3
         clahe = cv.createCLAHE(clipLimit=1.5, tileGridSize=(8, 8))
         img_temp = clahe.apply(img_temp)
             
@@ -156,18 +152,14 @@ class ComprovanteResidencia(Documento):
                 if textos:
                     linhas_documento.append(" ".join(textos).upper())
 
-        # Mapeia letras que o OCR confunde com números (O->0, l->1, B->8, etc)
         mapa_ocr_numeros = str.maketrans("SBGOILZsbgoilz", "58601125860112")
         
         ceps_candidatos = []
         
-        # Regex 1: Pega tudo ancorado por variações de "CEP" ou "CP", engolindo lixo no meio
         regex_cep_ancorado = r'(?:C[\W_]*E?[\W_]*P)[\W_]*(\d{5})[\W_]*(\d{3})'
-        # Regex 2: Pega qualquer formato solto de 8 números que não seja parte de um número maior
         regex_cep_solto = r'(?<!\d)(\d{5})[\W_]*(\d{3})(?!\d)'
 
         for linha in linhas_documento:
-            # Transforma letras similares em números antes da Regex agir
             linha_num = linha.translate(mapa_ocr_numeros)
             
             for m in re.finditer(regex_cep_ancorado, linha_num):
@@ -180,20 +172,15 @@ class ComprovanteResidencia(Documento):
 
         cep_final_valido = None
         
-        # LÓGICA DE MERCÊ DA SORTE (Bottom-Up)
-        # Varre a lista de trás para frente. O primeiro que for validado pela API vira a resposta.
         for cep_cand in reversed(ceps_candidatos):
             if self._validar_e_buscar_cep(cep_cand):
                 cep_final_valido = cep_cand
                 self.cep = cep_cand
                 break
                 
-        # Fallback de segurança: Se a internet cair ou o CEP for muito novo para a API do ViaCEP, 
-        # ele assumirá o último CEP capturado pela regex (que costuma ser o do usuário).
         if not cep_final_valido and ceps_candidatos:
             self.cep = ceps_candidatos[-1]
 
-        # --- Extração do Número ---
         indicadores_rua = r'\b(RUA|ROA|AVENIDA|AV\.|AV|TRAVESSA|RODOVIA|ALAMEDA|PRACA|R\.|R)\b'
         
         for i, linha in enumerate(linhas_documento):

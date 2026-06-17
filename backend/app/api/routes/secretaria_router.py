@@ -15,6 +15,7 @@ from app.schemas.base import HTTPErrorResponse
 from app.schemas.secretaria.documento_analise_response import DocumentoAnaliseResponse
 from app.schemas.secretaria.assumir_candidatura_schema import AssumirCandidaturaResponse
 from app.schemas.secretaria.candidatura_documentos_schema import CandidaturaDocumentosResponse
+from app.schemas.secretaria.analise_documento_schema import AnaliseDocumentoResponse
 
 from app.models.usuario import Usuario
 
@@ -28,6 +29,7 @@ from app.services.secretaria.validators.arquivo_visualizacao_validator import Ar
 from app.services.secretaria.validators.candidatura_lock_validator import CandidaturaLockValidator
 from app.services.secretaria.candidatura_lock_service import CandidaturaLockService
 from app.services.secretaria.presenters.assumir_candidatura_presenter import AssumirCandidaturaPresenter
+from app.services.secretaria.analise_documento_service import AnaliseDocumentoService
 
 router = APIRouter(prefix="/secretaria", tags=["Secretaria Dashboard"])
 
@@ -439,34 +441,6 @@ def visualizar_documento(documento_id: int, db: Session = Depends(get_db), secre
     if not documento:
 
         raise HTTPException(status_code=404, detail="Documento não encontrado")
-    
-    print(
-    "Documento:",
-    documento.id
-    )
-
-    print(
-        "Versao atual:",
-        documento.versao_atual_id
-    )
-
-    for v in documento.versoes:
-
-        print(
-            "VERSAO:",
-            v.id
-        )
-
-        for a in v.arquivos:
-
-            print(
-                "ARQUIVO:",
-                a.id,
-                a.file_path
-            )
-
-    for v in documento.versoes:
-        print(v.id)
 
     return DocumentoAnaliseService.obter_documento_para_analise(documento)
 
@@ -795,3 +769,16 @@ def listar_documentos_candidatura(candidatura_id: int, db: Session = Depends(get
             for documento in candidatura.documentos
         ]
     }
+
+@router.post(
+    "/documentos/{documento_id}/aprovar",
+    response_model=AnaliseDocumentoResponse
+)
+def aprovar_documento(documento_id: int, db: Session = Depends(get_db), secretaria=Depends(get_secretaria_logada)):
+
+    documento = DocumentoRepository.buscar_por_id(db, documento_id)
+
+    if not documento:
+        raise HTTPException(status_code=404, detail="Documento não encontrado")
+
+    return AnaliseDocumentoService.aprovar(db=db, documento=documento, secretaria=secretaria)

@@ -1,3 +1,5 @@
+from app.enums.status_analise import StatusAnalise
+
 from pydantic import BaseModel
 
 class SolicitarCorrecaoInput(BaseModel):
@@ -15,4 +17,9 @@ class AnaliseDocumentoResponse(BaseModel):
     class Config:
         from_attributes = True
 
-    
+class AnaliseDocumentoCreateSchema(BaseModel):
+
+    versao_documento_id: int
+    secretaria_id: int
+    status: StatusAnalise
+    motivo: str | None = None

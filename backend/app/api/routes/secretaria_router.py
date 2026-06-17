@@ -15,7 +15,7 @@ from app.schemas.base import HTTPErrorResponse
 from app.schemas.secretaria.documento_analise_response import DocumentoAnaliseResponse
 from app.schemas.secretaria.assumir_candidatura_schema import AssumirCandidaturaResponse
 from app.schemas.secretaria.candidatura_documentos_schema import CandidaturaDocumentosResponse
-from app.schemas.secretaria.analise_documento_schema import AnaliseDocumentoResponse
+from app.schemas.secretaria.analise_documento_schema import AnaliseDocumentoResponse, SolicitarCorrecaoInput
 
 from app.models.usuario import Usuario
 
@@ -439,8 +439,11 @@ def visualizar_documento(documento_id: int, db: Session = Depends(get_db), secre
     documento = DocumentoRepository.buscar_por_id(db, documento_id)
 
     if not documento:
-
         raise HTTPException(status_code=404, detail="Documento não encontrado")
+    
+    candidatura = documento.candidatura
+
+    CandidaturaLockValidator.validar(candidatura, secretaria)
 
     return DocumentoAnaliseService.obter_documento_para_analise(documento)
 
@@ -782,3 +785,27 @@ def aprovar_documento(documento_id: int, db: Session = Depends(get_db), secretar
         raise HTTPException(status_code=404, detail="Documento não encontrado")
 
     return AnaliseDocumentoService.aprovar(db=db, documento=documento, secretaria=secretaria)
+
+
+@router.post(
+    "/documentos/{documento_id}/solicitar-correcao",
+    response_model=AnaliseDocumentoResponse
+)
+def solicitar_correcao(
+    documento_id: int,
+    dados: SolicitarCorrecaoInput,
+    db: Session = Depends(get_db),
+    secretaria=Depends(get_secretaria_logada)
+):
+
+    documento = DocumentoRepository.buscar_por_id(db, documento_id)
+
+    if not documento:
+        raise HTTPException(status_code=404, detail="Documento não encontrado")
+
+    return AnaliseDocumentoService.solicitar_correcao(
+        db=db,
+        documento=documento,
+        secretaria=secretaria,
+        motivo=dados.motivo
+    )

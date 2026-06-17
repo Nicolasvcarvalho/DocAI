@@ -8,6 +8,7 @@ from app.repositories.analise_documento_repository import AnaliseDocumentoReposi
 from app.services.documento.workflow.documento_status_workflow import DocumentoStatusWorkflow
 from app.services.documento.workflow.candidatura_workflow import CandidaturaWorkflowService
 from app.services.secretaria.candidatura_lock_service import CandidaturaLockService
+from app.services.secretaria.validators.candidatura_lock_validator import CandidaturaLockValidator
 
 class AnaliseDocumentoService:
 
@@ -15,6 +16,8 @@ class AnaliseDocumentoService:
     def aprovar(db, documento, secretaria):
 
         candidatura = documento.candidatura
+        
+        CandidaturaLockValidator.validar(candidatura, secretaria)        
 
         dados = AnaliseDocumentoCreateSchema(
             versao_documento_id=documento.versao_atual_id,
@@ -46,6 +49,8 @@ class AnaliseDocumentoService:
     def solicitar_correcao(db, documento, secretaria, motivo):
 
         candidatura = documento.candidatura
+        
+        CandidaturaLockValidator.validar(candidatura, secretaria) 
 
         dados = AnaliseDocumentoCreateSchema(
             versao_documento_id=documento.versao_atual_id,

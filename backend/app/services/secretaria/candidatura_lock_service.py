@@ -1,5 +1,7 @@
 from app.repositories.candidatura_repository import CandidaturaRepository
 
+from app.enums.status_candidatura import StatusCandidatura
+
 from app.services.secretaria.validators.candidatura_assumir_validator import CandidaturaAssumirValidator
 from app.services.documento.workflow.candidatura_workflow import CandidaturaWorkflowService
 
@@ -48,3 +50,14 @@ class CandidaturaLockService:
             return
     
         candidatura.lock_expires_at = datetime.now(UTC) + timedelta(minutes=30)
+
+    @staticmethod
+    def finalizar_se_necessario(candidatura):
+
+        if candidatura.status in [
+            StatusCandidatura.APROVADA,
+            StatusCandidatura.AGUARDANDO_DOCUMENTOS,
+            StatusCandidatura.DOCUMENTACAO_PENDENTE
+        ]:
+
+            CandidaturaRepository.liberar_lock(candidatura)

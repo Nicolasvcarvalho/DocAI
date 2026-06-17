@@ -1,6 +1,6 @@
 from app.schemas.secretaria.documento_analise_response import DocumentoAnaliseResponse
 from app.schemas.secretaria.ocr_response import OCRResponse
-from app.schemas.secretaria.arquivo_documento_response import ArquivoDocumentoResponse
+from app.schemas.secretaria.arquivo_documento_schema import ArquivoDocumentoResponse
 
 class DocumentoAnaliseService:
 

@@ -15,10 +15,13 @@ class OCRService:
     @staticmethod
     def executar_ocr_documentos(db, versao_documento: VersaoDocumento):
 
+        print("BUSCANDO EXTRATOR...")
         extractor = OCRExtractorFactory.obter_extractor(versao_documento.documento.tipo_documento.nome)
 
+        print("OCR INICIOU...")
         dados_json, texto_extraido = extractor.executar(versao_documento)
 
+        print("OCR FINALIZOU!!")
         resultado_existente = OCRResultadoRepository.buscar_por_versao(db, versao_documento_id=versao_documento.id)
 
         if resultado_existente:

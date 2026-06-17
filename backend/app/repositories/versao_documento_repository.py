@@ -20,7 +20,7 @@ class VersaoDocumentoRepository:
     @staticmethod
     def buscar_ultima_versao(db, documento_id: int):
 
-        return db.query(func.max(VersaoDocumento.versao)).filter(VersaoDocumento.id==documento_id).scalar()
+        return db.query(func.max(VersaoDocumento.versao)).filter(VersaoDocumento.documento_id==documento_id).scalar()
     
     @staticmethod
     def buscar_por_id(db, versao_documento_id: int):

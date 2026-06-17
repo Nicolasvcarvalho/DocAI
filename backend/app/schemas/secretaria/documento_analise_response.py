@@ -1,7 +1,6 @@
 from pydantic import BaseModel
 from app.schemas.secretaria.ocr_response import OCRResponse
-from app.schemas.secretaria.arquivo_documento_response import ArquivoDocumentoResponse
-
+from app.schemas.secretaria.arquivo_documento_schema import ArquivoDocumentoResponse
 
 class DocumentoAnaliseResponse(BaseModel):
 

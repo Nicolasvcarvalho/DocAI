@@ -19,7 +19,8 @@ class CandidaturaLockService:
             secretaria_id=secretaria.id
         )
 
-        CandidaturaWorkflowService.recalcular_status_candidatura(db, candidatura)
+        novo_status = CandidaturaWorkflowService.recalcular_status_candidatura(candidatura)
+        candidatura.status = novo_status
 
         db.commit()
 

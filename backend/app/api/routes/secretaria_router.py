@@ -14,6 +14,7 @@ from app.schemas.dashboard_secretaria_schema import DashboardSecretariaOutput
 from app.schemas.base import HTTPErrorResponse
 from app.schemas.secretaria.documento_analise_response import DocumentoAnaliseResponse
 from app.schemas.secretaria.assumir_candidatura_schema import AssumirCandidaturaResponse
+from app.schemas.secretaria.candidatura_documentos_schema import CandidaturaDocumentosResponse
 
 from app.models.usuario import Usuario
 
@@ -438,6 +439,34 @@ def visualizar_documento(documento_id: int, db: Session = Depends(get_db), secre
     if not documento:
 
         raise HTTPException(status_code=404, detail="Documento não encontrado")
+    
+    print(
+    "Documento:",
+    documento.id
+    )
+
+    print(
+        "Versao atual:",
+        documento.versao_atual_id
+    )
+
+    for v in documento.versoes:
+
+        print(
+            "VERSAO:",
+            v.id
+        )
+
+        for a in v.arquivos:
+
+            print(
+                "ARQUIVO:",
+                a.id,
+                a.file_path
+            )
+
+    for v in documento.versoes:
+        print(v.id)
 
     return DocumentoAnaliseService.obter_documento_para_analise(documento)
 
@@ -717,7 +746,7 @@ def visualizar_arquivo(arquivo_id: int, db: Session = Depends(get_db), secretari
         raise HTTPException(status_code=404, detail="Arquivo não encontrado")
 
     candidatura = ArquivoVisualizacaoValidator.validar(arquivo)
-    CandidaturaLockValidator.validar(candidatura)
+    CandidaturaLockValidator.validar(candidatura, secretaria)
 
     return ArquivoVisualizacaoService.visualizar(arquivo)
 
@@ -741,3 +770,28 @@ def assumir_candidatura(
 
     return AssumirCandidaturaPresenter.montar(candidatura)
     
+@router.get(
+    "/candidaturas/{candidatura_id}/documentos",
+    response_model=CandidaturaDocumentosResponse,
+    summary="Listar documentos da candidatura"
+)
+def listar_documentos_candidatura(candidatura_id: int, db: Session = Depends(get_db), secretaria=Depends(get_secretaria_logada)):
+    
+    candidatura = CandidaturaRepository.buscar_por_id(db, candidatura_id)
+
+    if not candidatura:
+        raise HTTPException(status_code=404, detail="Candidatura não encontrada")
+
+    CandidaturaLockValidator.validar(candidatura, secretaria)
+
+    return {
+        "candidatura_id": candidatura.id,
+        "documentos": [
+            {
+                "id": documento.id,
+                "tipo_documento": documento.tipo_documento.nome,
+                "status": documento.status
+            }
+            for documento in candidatura.documentos
+        ]
+    }

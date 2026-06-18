@@ -80,7 +80,7 @@ router = APIRouter(prefix="/candidaturas", tags=["Dashboard Candidato"])
 
     ## Como o status da candidatura é calculado
 
-    O status da candidatura é derivado automaticamente a partir dos documentos obrigatórios.
+    O status da candidatura é derivado automaticamente a partir dos documentos .
 
     O backend recalcula esse status sempre que ocorre uma transição documental.
 
@@ -88,7 +88,7 @@ router = APIRouter(prefix="/candidaturas", tags=["Dashboard Candidato"])
 
     ### AGUARDANDO_DOCUMENTOS
 
-    Existe pelo menos um documento obrigatório em:
+    Existe pelo menos um documento em:
 
     ```text
     PENDENTE_ENVIO

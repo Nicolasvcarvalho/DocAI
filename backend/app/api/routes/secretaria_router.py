@@ -125,8 +125,6 @@ O campo:
 
 indica que pelo menos um documento já foi reenviado pelo candidato.
 
-Internamente o sistema verifica se existem documentos com mais de uma versão registrada.
-
 Esse indicador pode ser utilizado pelo frontend para:
 
 * destacar candidaturas com histórico de correções;
@@ -456,7 +454,7 @@ def visualizar_documento(documento_id: int, db: Session = Depends(get_db), secre
 
     A rota é utilizada pela área da secretaria para visualizar imagens e documentos PDF diretamente na interface de análise documental.
 
-    Diferente de uma rota de download, o objetivo principal desta operação é permitir a exibição do documento dentro da aplicação para comparação com os dados estruturados extraídos pelo OCR.
+    O objetivo principal desta operação é permitir a exibição do documento dentro da aplicação para comparação com os dados estruturados extraídos pelo OCR.
 
     ---
 

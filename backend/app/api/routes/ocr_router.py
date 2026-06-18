@@ -30,7 +30,6 @@ router = APIRouter(prefix="/ocr", tags=["OCR"])
         O acesso é protegido por regras de autorização, garantindo que apenas:
 
         * o candidato proprietário do documento;
-        * ou usuários da secretaria;
 
         possam consultar os dados extraídos.
 
@@ -73,10 +72,6 @@ router = APIRouter(prefix="/ocr", tags=["OCR"])
         * se o usuário possui acesso ao documento.
 
         Regras:
-
-        ### Secretaria
-
-        Usuários da secretaria possuem acesso institucional e podem visualizar qualquer documento.
 
         ### Candidato
 
@@ -176,7 +171,6 @@ router = APIRouter(prefix="/ocr", tags=["OCR"])
         * exibição dos dados extraídos;
         * revisão OCR pelo candidato;
         * correção de dados identificados incorretamente;
-        * conferência documental pela secretaria.
 
         ---
 
@@ -326,10 +320,6 @@ EM_ANALISE
 ---
 
 ## Controle de acesso
-
-### Secretaria
-
-Pode acessar qualquer documento.
 
 ### Candidato
 

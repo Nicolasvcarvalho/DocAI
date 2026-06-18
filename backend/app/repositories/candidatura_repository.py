@@ -30,13 +30,6 @@ class CandidaturaRepository:
         resultado = []
 
         for candidatura in candidaturas:
-            
-            print(
-                f"id={candidatura.id}",
-                f"status_banco={candidatura.status}",
-                f"possui_analista={candidatura.possui_analista}",
-                f"esta_disponivel={candidatura.esta_disponivel}"
-                )
 
             if candidatura.esta_disponivel:
                 
@@ -56,7 +49,7 @@ class CandidaturaRepository:
     @staticmethod
     def assumir(candidatura, secretaria_id):
 
-        agora = datetime.now(UTC)
+        agora = datetime.utcnow()
 
         candidatura.locked_by_id = secretaria_id
         candidatura.locked_at = agora

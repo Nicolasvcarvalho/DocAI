@@ -36,12 +36,14 @@ class CandidaturaLockService:
         if not candidatura.lock_expires_at:
             return
 
-        agora = datetime.now(UTC)
+        agora = datetime.utcnow()
 
         if candidatura.lock_expires_at > agora:
             return
 
         CandidaturaRepository.liberar_lock(candidatura)
+
+        candidatura.status = CandidaturaWorkflowService.recalcular_status_candidatura(candidatura)
 
     @staticmethod
     def renovar_lock(candidatura, secretaria):
@@ -49,7 +51,8 @@ class CandidaturaLockService:
         if candidatura.locked_by_id!= secretaria.id:
             return
     
-        candidatura.lock_expires_at = datetime.now(UTC) + timedelta(minutes=30)
+        candidatura.lock_expires_at = datetime.utcnow() + timedelta(minutes=30)
+
 
     @staticmethod
     def finalizar_se_necessario(candidatura):

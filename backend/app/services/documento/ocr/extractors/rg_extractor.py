@@ -12,7 +12,7 @@ class RGExtractor:
         versao_documento: VersaoDocumento
     ) -> tuple[dict, str]:
 
-        dados_final = {}
+        '''dados_final = {}
 
         textos_extraidos = []
 
@@ -39,7 +39,18 @@ class RGExtractor:
 
         texto_completo = "\n".join(
             textos_extraidos
-        )
+        )'''
+
+        dados_final = {
+            "nome": "João Silva",
+            "cpf": "12345678900",
+            "rg": "2345678",
+            "data_nascimento": "2000-01-01",
+            "nome_pai": "José Silva",
+            "nome_mae": "Maria Silva"
+        }
+
+        texto_completo = "texto extraido"
 
         return (
             dados_final,

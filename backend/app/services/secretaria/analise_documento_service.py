@@ -2,6 +2,7 @@ from app.enums.status_documento import StatusDocumento
 from app.enums.status_analise import StatusAnalise
 
 from app.schemas.secretaria.analise_documento_schema import AnaliseDocumentoCreateSchema
+from app.schemas.secretaria.analise_documento_schema import AnaliseDocumentoResponse
 
 from app.repositories.analise_documento_repository import AnaliseDocumentoRepository
 
@@ -15,9 +16,7 @@ class AnaliseDocumentoService:
     @staticmethod
     def aprovar(db, documento, secretaria):
 
-        candidatura = documento.candidatura
-        
-        CandidaturaLockValidator.validar(candidatura, secretaria)        
+        candidatura = documento.candidatura       
 
         dados = AnaliseDocumentoCreateSchema(
             versao_documento_id=documento.versao_atual_id,
@@ -43,14 +42,17 @@ class AnaliseDocumentoService:
 
         db.refresh(documento)
 
-        return documento
+        return AnaliseDocumentoResponse(
+            documento_id=documento.id,
+            status_documento=documento.status,
+            status_candidatura=candidatura.status,
+            mensagem="Documento aprovado com sucesso"
+        )
     
     @staticmethod
     def solicitar_correcao(db, documento, secretaria, motivo):
 
         candidatura = documento.candidatura
-        
-        CandidaturaLockValidator.validar(candidatura, secretaria) 
 
         dados = AnaliseDocumentoCreateSchema(
             versao_documento_id=documento.versao_atual_id,
@@ -77,4 +79,9 @@ class AnaliseDocumentoService:
 
         db.refresh(documento)
 
-        return documento
+        return AnaliseDocumentoResponse(
+            documento_id=documento.id,
+            status_documento=documento.status,
+            status_candidatura=candidatura.status,
+            mensagem="Correção solicitada com sucesso"
+        )

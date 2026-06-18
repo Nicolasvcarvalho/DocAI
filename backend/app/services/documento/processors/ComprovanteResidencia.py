@@ -26,12 +26,12 @@ class ComprovanteResidencia(Documento):
     @property
     def ExportarDict(self) -> dict:
         return {
-            "Logradouro": self.logradouro if self.logradouro else "",
-            "Número": self.numero if self.numero else "",
-            "Bairro": self.bairro if self.bairro else "",
-            "Cidade": self.cidade if self.cidade else "",
-            "Estado": self.estado if self.estado else "",
-            "CEP": self.cep if self.cep else ""
+            "logradouro": self.logradouro if self.logradouro else "",
+            "numero": self.numero if self.numero else "",
+            "bairro": self.bairro if self.bairro else "",
+            "cidade": self.cidade if self.cidade else "",
+            "estado": self.estado if self.estado else "",
+            "cep": self.cep if self.cep else ""
         }
 
     def CorrigirOrientacao(self, img: np.ndarray) -> np.ndarray:

@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import cv2 as cv
 import requests
-from Documento import Documento
+from app.services.documento.processors.Documento import Documento
 
 class ComprovanteResidencia(Documento):
     def __init__(self, imagem: np.ndarray) -> None:

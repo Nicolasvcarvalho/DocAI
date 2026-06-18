@@ -1,5 +1,5 @@
-from processors.RG import RG
-from processors.ComprovanteResidencia import ComprovanteResidencia
+from app.services.documento.processors.RG import RG
+from app.services.documento.processors.ComprovanteResidencia import ComprovanteResidencia
 import os
 import pandas as pd
 import cv2 as cv
@@ -11,10 +11,10 @@ def extrai_rg(path_da_imagem: str, raw_data: bool = False) -> tuple[str,str]:
     rg = cv.imread(path_da_imagem)
 
     if(rg is None): raise ValueError("Não foi possível decodificar a imagem. Verifique o formato. ")
-    
+   
     rg = RG(rg)
 
-    rg_json = pd.DataFrame([rg.ExportarDict])
+    rg_json = pd.DataFrame([rg.ExportarDict()])
     rg_json = rg_json.to_json(orient='records',force_ascii=False,indent=4)
 
     if(raw_data):

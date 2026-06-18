@@ -731,9 +731,187 @@ def visualizar_arquivo(arquivo_id: int, db: Session = Depends(get_db), secretari
 
 
 @router.post(
-    "/candidaturas/{candidatura_id}/assumir",
-    response_model=AssumirCandidaturaResponse
+"/candidaturas/{candidatura_id}/assumir",
+response_model=AssumirCandidaturaResponse,
+summary="Assumir candidatura para análise documental",
+description=dedent("""
+Permite que uma secretaria assuma a responsabilidade pela análise documental de uma candidatura.
+
+A operação cria um lock institucional sobre a candidatura, impedindo que outra secretaria realize análises concorrentes sobre os mesmos documentos.
+
+---
+
+## Objetivo da rota
+
+A rota é responsável por:
+
+* localizar a candidatura;
+* validar se a candidatura pode ser analisada;
+* verificar se não existe outra secretaria responsável;
+* criar o lock institucional;
+* registrar a secretaria responsável;
+* atualizar o status da candidatura;
+* persistir a análise no banco de dados.
+
+---
+
+## Fluxo de funcionamento
+
+```text
+Secretaria seleciona candidatura
+↓
+POST /secretaria/candidaturas/{id}/assumir
+↓
+Backend valida disponibilidade
+↓
+Backend cria lock institucional
+↓
+Secretaria torna-se responsável
+↓
+Status atualizado para EM_ANALISE
+↓
+Resposta retornada
+```
+
+---
+
+## O que é o lock institucional?
+
+O lock é um mecanismo utilizado para impedir análise concorrente.
+
+Exemplo:
+
+```text
+Secretaria A assume candidatura
+↓
+lock criado
+↓
+Secretaria B tenta assumir
+↓
+acesso negado
+```
+
+Dessa forma apenas uma secretaria pode realizar alterações documentais por vez.
+
+---
+
+## Regras de acesso
+
+Esta rota é exclusiva para usuários autenticados do tipo SECRETARIA.
+
+Além disso:
+
+* a candidatura deve existir;
+* a candidatura deve estar disponível para análise;
+* a candidatura não pode estar sob responsabilidade de outra secretaria.
+
+---
+
+## Resposta de sucesso
+
+Exemplo:
+
+```json
+{
+  "candidatura_id": 15,
+  "status": "EM_ANALISE",
+  "secretaria_id": 3,
+  "mensagem": "Candidatura assumida com sucesso"
+}
+```
+
+---
+
+## Persistência
+
+Quando a operação é concluída:
+
+```text
+locked_by_id
+↓
+preenchido
+
+locked_at
+↓
+preenchido
+
+lock_expires_at
+↓
+preenchido
+
+status candidatura
+↓
+EM_ANALISE
+```
+
+Todas as alterações são persistidas imediatamente no banco de dados.
+"""),
+responses={
+
+    200: {
+        "model": AssumirCandidaturaResponse,
+        "description": (
+            "Candidatura assumida com sucesso."
+        )
+    },
+
+    401: {
+        "model": HTTPErrorResponse,
+        "description": (
+            "Usuário não autenticado."
+        )
+    },
+
+    404: {
+        "model": HTTPErrorResponse,
+        "description": (
+            "Candidatura não encontrada."
+        ),
+        "content": {
+            "application/json": {
+                "example": {
+                    "detail": (
+                        "Candidatura não encontrada"
+                    )
+                }
+            }
+        }
+    },
+
+    400: {
+        "model": HTTPErrorResponse,
+        "description": (
+            "Candidatura indisponível para análise."
+        ),
+        "content": {
+            "application/json": {
+                "example": {
+                    "detail": (
+                        "A candidatura não está disponível para análise"
+                    )
+                }
+            }
+        }
+    },
+
+    409: {
+        "model": HTTPErrorResponse,
+        "description": (
+            "Candidatura já assumida."
+        ),
+        "content": {
+            "application/json": {
+                "example": {
+                    "detail": (
+                        "Candidatura em análise por outra secretaria"
+                    )
+                }
+            }
+        }
+    }
+}
 )
+
 def assumir_candidatura(
     candidatura_id: int,
     db: Session = Depends(get_db),
@@ -750,9 +928,155 @@ def assumir_candidatura(
     return AssumirCandidaturaPresenter.montar(candidatura)
     
 @router.get(
-    "/candidaturas/{candidatura_id}/documentos",
-    response_model=CandidaturaDocumentosResponse,
-    summary="Listar documentos da candidatura"
+"/candidaturas/{candidatura_id}/documentos",
+response_model=CandidaturaDocumentosResponse,
+summary="Listar documentos da candidatura",
+description=dedent("""
+Retorna todos os documentos pertencentes a uma candidatura assumida pela secretaria autenticada.
+
+A rota é utilizada como ponto de entrada para a análise documental, permitindo que a secretaria visualize quais documentos precisam ser avaliados.
+
+---
+
+## Objetivo da rota
+
+A rota é responsável por:
+
+* localizar a candidatura;
+* validar o lock institucional;
+* validar a secretaria responsável;
+* listar todos os documentos da candidatura;
+* retornar o status atual de cada documento.
+
+---
+
+## Fluxo de funcionamento
+
+```text
+Secretaria assume candidatura
+↓
+GET /secretaria/candidaturas/{id}/documentos
+↓
+Backend valida lock
+↓
+Backend valida secretaria responsável
+↓
+Documentos são carregados
+↓
+Lista retornada
+```
+
+---
+
+## Informações retornadas
+
+Para cada documento são retornados:
+
+* identificador do documento;
+* tipo documental;
+* status atual do workflow.
+
+Exemplo:
+
+```json
+{
+  "candidatura_id": 15,
+  "documentos": [
+    {
+      "id": 10,
+      "tipo_documento": "DOCUMENTO_IDENTIFICACAO",
+      "status": "EM_ANALISE"
+    },
+    {
+      "id": 11,
+      "tipo_documento": "COMPROVANTE_RESIDENCIA",
+      "status": "APROVADO"
+    }
+  ]
+}
+```
+
+---
+
+## Regras de acesso
+
+Esta rota é exclusiva para usuários da secretaria.
+
+Além disso:
+
+* a candidatura deve existir;
+* a candidatura deve estar assumida;
+* a secretaria autenticada deve ser a responsável pela candidatura.
+
+---
+
+## Renovação automática do lock
+
+Sempre que a secretaria acessar informações da candidatura o lock institucional pode ser renovado.
+
+Isso evita que a candidatura seja liberada enquanto está sendo efetivamente analisada.
+"""),
+responses={
+
+    200: {
+        "model": CandidaturaDocumentosResponse,
+        "description": (
+            "Documentos retornados com sucesso."
+        )
+    },
+
+    401: {
+        "model": HTTPErrorResponse,
+        "description": (
+            "Usuário não autenticado."
+        )
+    },
+
+    404: {
+        "model": HTTPErrorResponse,
+        "description": (
+            "Candidatura não encontrada."
+        ),
+        "content": {
+            "application/json": {
+                "example": {
+                    "detail": (
+                        "Candidatura não encontrada"
+                    )
+                }
+            }
+        }
+    },
+
+    403: {
+        "model": HTTPErrorResponse,
+        "description": (
+            "Acesso negado à candidatura."
+        ),
+        "content": {
+            "application/json": {
+                "examples": {
+
+                    "Nao Assumida": {
+                        "value": {
+                            "detail": (
+                                "Candidatura não foi assumida"
+                            )
+                        }
+                    },
+
+                    "Outra Secretaria": {
+                        "value": {
+                            "detail": (
+                                "Candidatura está sob responsabilidade de outra secretaria"
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 )
 def listar_documentos_candidatura(candidatura_id: int, db: Session = Depends(get_db), secretaria=Depends(get_secretaria_logada)):
     
@@ -776,8 +1100,198 @@ def listar_documentos_candidatura(candidatura_id: int, db: Session = Depends(get
     }
 
 @router.post(
-    "/documentos/{documento_id}/aprovar",
-    response_model=AnaliseDocumentoResponse
+"/documentos/{documento_id}/aprovar",
+response_model=AnaliseDocumentoResponse,
+summary="Aprovar documento",
+description=dedent("""
+Registra a aprovação de um documento durante a análise documental.
+
+A operação cria um registro formal de análise, atualiza o workflow documental e recalcula automaticamente o status da candidatura.
+
+---
+
+## Objetivo da rota
+
+A rota é responsável por:
+
+* localizar o documento;
+* validar o lock institucional;
+* validar a secretaria responsável;
+* registrar a decisão da análise;
+* aprovar o documento;
+* recalcular o status da candidatura;
+* liberar o lock quando apropriado;
+* persistir todas as alterações no banco de dados.
+
+---
+
+## Fluxo de aprovação
+
+```text
+Secretaria abre documento
+↓
+Analisa arquivo e OCR
+↓
+POST /secretaria/documentos/{id}/aprovar
+↓
+Registro AnaliseDocumento criado
+↓
+Documento marcado como APROVADO
+↓
+Status da candidatura recalculado
+↓
+Alterações persistidas
+```
+
+---
+
+## Registro de auditoria
+
+Toda aprovação gera um registro permanente:
+
+```text
+AnaliseDocumento
+↓
+versão analisada
+↓
+secretaria responsável
+↓
+resultado da análise
+↓
+data da decisão
+```
+
+Isso garante rastreabilidade institucional.
+
+---
+
+## Atualização automática do workflow
+
+Após a aprovação:
+
+```text
+Documento
+↓
+APROVADO
+```
+
+O sistema recalcula automaticamente:
+
+```text
+Status da candidatura
+```
+
+Possíveis resultados:
+
+```text
+EM_ANALISE
+```
+
+ou
+
+```text
+APROVADA
+```
+
+dependendo dos demais documentos obrigatórios.
+
+---
+
+## Resposta de sucesso
+
+Exemplo:
+
+```json
+{
+  "documento_id": 10,
+  "status_documento": "APROVADO",
+  "status_candidatura": "EM_ANALISE",
+  "mensagem": "Documento aprovado com sucesso"
+}
+```
+
+---
+
+## Regras de acesso
+
+Esta rota é exclusiva para usuários da secretaria.
+
+Além disso:
+
+* o documento deve existir;
+* a candidatura deve estar assumida;
+* a secretaria autenticada deve ser a responsável pela candidatura;
+* o lock institucional deve estar válido.
+
+---
+
+## Persistência
+
+Todas as alterações realizadas pela rota são persistidas imediatamente no banco de dados.
+
+Uma aprovação não é removida caso o lock expire posteriormente.
+"""),
+responses={
+
+    200: {
+        "model": AnaliseDocumentoResponse,
+        "description": (
+            "Documento aprovado com sucesso."
+        )
+    },
+
+    401: {
+        "model": HTTPErrorResponse,
+        "description": (
+            "Usuário não autenticado."
+        )
+    },
+
+    404: {
+        "model": HTTPErrorResponse,
+        "description": (
+            "Documento não encontrado."
+        ),
+        "content": {
+            "application/json": {
+                "example": {
+                    "detail": (
+                        "Documento não encontrado"
+                    )
+                }
+            }
+        }
+    },
+
+    403: {
+        "model": HTTPErrorResponse,
+        "description": (
+            "Acesso negado ao documento."
+        ),
+        "content": {
+            "application/json": {
+                "examples": {
+
+                    "Nao Assumida": {
+                        "value": {
+                            "detail": (
+                                "Candidatura não foi assumida"
+                            )
+                        }
+                    },
+
+                    "Outra Secretaria": {
+                        "value": {
+                            "detail": (
+                                "Candidatura está sob responsabilidade de outra secretaria"
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 )
 def aprovar_documento(documento_id: int, db: Session = Depends(get_db), secretaria=Depends(get_secretaria_logada)):
 
@@ -794,8 +1308,311 @@ def aprovar_documento(documento_id: int, db: Session = Depends(get_db), secretar
 
 
 @router.post(
-    "/documentos/{documento_id}/solicitar-correcao",
-    response_model=AnaliseDocumentoResponse
+"/documentos/{documento_id}/solicitar-correcao",
+response_model=AnaliseDocumentoResponse,
+summary="Solicitar correção documental",
+description=dedent("""
+Registra uma reprovação documental e solicita o reenvio do documento pelo candidato.
+
+A operação cria um registro formal de análise, armazena o motivo da correção, atualiza o workflow documental e recalcula automaticamente o status da candidatura.
+
+---
+
+## Objetivo da rota
+
+A rota é responsável por:
+
+* localizar o documento;
+* validar o lock institucional;
+* validar a secretaria responsável;
+* registrar a decisão da análise;
+* armazenar o motivo da correção;
+* alterar o status do documento;
+* recalcular o status da candidatura;
+* liberar o lock quando apropriado;
+* persistir todas as alterações no banco de dados.
+
+---
+
+## Fluxo de solicitação de correção
+
+```text
+Secretaria abre documento
+↓
+Analisa arquivo e OCR
+↓
+Identifica inconsistência
+↓
+POST /secretaria/documentos/{id}/solicitar-correcao
+↓
+Registro AnaliseDocumento criado
+↓
+Motivo armazenado
+↓
+Documento marcado como AGUARDANDO_REENVIO
+↓
+Status da candidatura recalculado
+↓
+Alterações persistidas
+```
+
+---
+
+## Estrutura da requisição
+
+Exemplo:
+
+```json
+{
+  "motivo": "Documento ilegível"
+}
+```
+
+---
+
+## Campo motivo
+
+O motivo é utilizado para informar ao candidato exatamente o que precisa ser corrigido.
+
+Exemplos:
+
+```text
+Documento ilegível
+```
+
+```text
+Imagem cortada
+```
+
+```text
+CPF divergente dos dados cadastrados
+```
+
+```text
+Verso do documento não enviado
+```
+
+Essas informações serão utilizadas pelo candidato durante o processo de reenvio documental.
+
+---
+
+## Registro de auditoria
+
+Toda solicitação de correção gera um registro permanente:
+
+```text
+AnaliseDocumento
+↓
+versão analisada
+↓
+secretaria responsável
+↓
+resultado da análise
+↓
+motivo informado
+↓
+data da decisão
+```
+
+Isso garante rastreabilidade completa do processo documental.
+
+---
+
+## Atualização automática do workflow
+
+Após a solicitação de correção:
+
+```text
+Documento
+↓
+AGUARDANDO_REENVIO
+```
+
+O candidato passa a visualizar:
+
+```text
+Reenviar Documento
+```
+
+em seu painel documental.
+
+---
+
+## Atualização da candidatura
+
+Após a alteração do documento o sistema recalcula automaticamente o status da candidatura.
+
+Possíveis resultados:
+
+```text
+AGUARDANDO_DOCUMENTOS
+```
+
+ou
+
+```text
+EM_ANALISE
+```
+
+dependendo do estado dos demais documentos obrigatórios.
+
+---
+
+## Resposta de sucesso
+
+Exemplo:
+
+```json
+{
+  "documento_id": 10,
+  "status_documento": "AGUARDANDO_REENVIO",
+  "status_candidatura": "AGUARDANDO_DOCUMENTOS",
+  "mensagem": "Correção documental solicitada com sucesso"
+}
+```
+
+---
+
+## Regras de acesso
+
+Esta rota é exclusiva para usuários da secretaria.
+
+Além disso:
+
+* o documento deve existir;
+* a candidatura deve estar assumida;
+* a secretaria autenticada deve ser a responsável pela candidatura;
+* o lock institucional deve estar válido.
+
+---
+
+## Persistência
+
+Todas as alterações realizadas pela rota são persistidas imediatamente no banco de dados.
+
+O histórico da análise permanece armazenado mesmo após:
+
+```text
+expiração do lock
+```
+
+ou
+
+```text
+troca da secretaria responsável
+```
+
+garantindo a integridade institucional do processo.
+
+---
+
+## Relação com o reenvio
+
+Após a solicitação de correção o fluxo segue:
+
+```text
+Documento aprovado?
+↓ Não
+
+AGUARDANDO_REENVIO
+↓
+Candidato visualiza motivo
+↓
+Novo upload
+↓
+Nova versão documental
+↓
+Novo OCR
+↓
+Nova análise da secretaria
+```
+
+O documento original não é sobrescrito.
+
+Cada novo envio gera uma nova versão documental, preservando todo o histórico da candidatura.
+"""),
+responses={
+
+    200: {
+        "model": AnaliseDocumentoResponse,
+        "description": (
+            "Correção documental solicitada com sucesso."
+        )
+    },
+
+    401: {
+        "model": HTTPErrorResponse,
+        "description": (
+            "Usuário não autenticado."
+        )
+    },
+
+    404: {
+        "model": HTTPErrorResponse,
+        "description": (
+            "Documento não encontrado."
+        ),
+        "content": {
+            "application/json": {
+                "example": {
+                    "detail": (
+                        "Documento não encontrado"
+                    )
+                }
+            }
+        }
+    },
+
+    403: {
+        "model": HTTPErrorResponse,
+        "description": (
+            "Acesso negado ao documento."
+        ),
+        "content": {
+            "application/json": {
+                "examples": {
+
+                    "Candidatura Nao Assumida": {
+                        "value": {
+                            "detail": (
+                                "Candidatura não foi assumida"
+                            )
+                        }
+                    },
+
+                    "Outra Secretaria": {
+                        "value": {
+                            "detail": (
+                                "Candidatura está sob responsabilidade de outra secretaria"
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    },
+
+    400: {
+        "model": HTTPErrorResponse,
+        "description": (
+            "Erro de validação da análise."
+        ),
+        "content": {
+            "application/json": {
+                "examples": {
+
+                    "Motivo Obrigatorio": {
+                        "value": {
+                            "detail": (
+                                "O motivo da correção é obrigatório"
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 )
 def solicitar_correcao(
     documento_id: int,

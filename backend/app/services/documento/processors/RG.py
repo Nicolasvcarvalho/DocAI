@@ -11,7 +11,7 @@ from app.services.documento.processors.Documento import Documento
 class RG(Documento):
     def __init__(self, imagem: np.ndarray) -> None:
         super().__init__(imagem)
-        
+       
         self.registro_geral: str = ""
         self.nome_candidato: str = ""
         self.naturalidade: str = ""
@@ -21,7 +21,7 @@ class RG(Documento):
         self.orgao_emissor: str = ""
         self.nome_pai: str = ""
         self.nome_mae: str = ""
-        
+       
         self.ExtrairTexto()
 
     @property
@@ -31,41 +31,41 @@ class RG(Documento):
     def CorrigirOrientacao(self, img: np.ndarray) -> np.ndarray:
         alt, larg = img.shape[:2]
         max_dim = max(alt, larg)
-        
+       
         if max_dim > 1200:
             escala = 1200 / max_dim
             img_mini = cv.resize(img, (int(larg * escala), int(alt * escala)), interpolation=cv.INTER_AREA)
         else:
             img_mini = img.copy()
-            
+           
         rotacoes = {
             0: img_mini,
             90: cv.rotate(img_mini, cv.ROTATE_90_CLOCKWISE),
             180: cv.rotate(img_mini, cv.ROTATE_180),
             270: cv.rotate(img_mini, cv.ROTATE_90_COUNTERCLOCKWISE)
         }
-        
+       
         melhor_angulo = 0
         max_pontos = -1
-        
+       
         termos_peso_2 = ["BRASIL", "ESTADO", "SECRETARIA", "SEGURANCA", "REGISTRO", "GERAL", "NOME", "FILIACAO", "NATURALIDADE", "NASCIMENTO"]
         termos_peso_1 = ["SSP", "POLICIA", "IDENTIFICACAO", "PERICIAS", "TITULAR", "ASSINATURA", "PROIBIDO", "PLASTIFICAR"]
-        
+       
         for angulo, img_rot in rotacoes.items():
             textos = self._reader.readtext(img_rot, detail=0)
             texto_completo = " ".join(textos).upper() #type: ignore
-            
+           
             pontos = 0
             pontos += sum(2 for termo in termos_peso_2 if termo in texto_completo)
             pontos += sum(1 for termo in termos_peso_1 if termo in texto_completo)
-            
+           
             datas = re.findall(r'\d{2}/\d{2}/\d{4}', texto_completo)
             pontos += len(datas) * 5
-            
+           
             if pontos > max_pontos:
                 max_pontos = pontos
                 melhor_angulo = angulo
-                
+               
         if melhor_angulo != 0:
             if melhor_angulo == 90: return cv.rotate(img, cv.ROTATE_90_CLOCKWISE)
             elif melhor_angulo == 180: return cv.rotate(img, cv.ROTATE_180)
@@ -76,10 +76,10 @@ class RG(Documento):
         img_temp = self.imagem.copy()
         img_temp = self.CorrigirOrientacao(img_temp)
         altura_atual, largura_atual = img_temp.shape[:2]
-        
+       
         nova_largura = int(largura_atual * 2)
         nova_altura = int(altura_atual * 2)
-        
+       
         if nova_largura > 0 and nova_altura > 0:
             img_temp = cv.resize(img_temp, (nova_largura, nova_altura), interpolation=cv.INTER_CUBIC)
 
@@ -93,11 +93,11 @@ class RG(Documento):
     def _remover_acentos(self, txt: str) -> str:
         return ''.join(c for c in unicodedata.normalize('NFD', txt) if unicodedata.category(c) != 'Mn')
 
-    
+   
 
     def ExtrairTexto(self) -> None:
         df_ocr = self.ExtracaoOCR()
-        
+       
         textos_originais = []
         textos_limpos = []
         mapa_ocr_numeros = str.maketrans("SBGOILZ", "5860112")
@@ -143,7 +143,7 @@ class RG(Documento):
             ctx = item['ctx']
             d_str = item['str']
             dt = item['dt']
-            
+           
             if "NASC" in ctx and not self.data_nascimento:
                 self.data_nascimento = d_str
             elif ("EXPED" in ctx or "EMISS" in ctx) and dt.year <= ano_atual + 1 and not self.data_expedicao:
@@ -152,7 +152,7 @@ class RG(Documento):
         if not self.data_nascimento or not self.data_expedicao:
             datas_passado = [d for d in datas_validas if d['dt'].year <= ano_atual + 1]
             datas_passado.sort(key=lambda x: x['dt'])
-            
+           
             if not self.data_nascimento and datas_passado:
                 self.data_nascimento = datas_passado[0]['str']
             if not self.data_expedicao and len(datas_passado) > 1:
@@ -161,7 +161,7 @@ class RG(Documento):
         linhas_orgao = []
         termos_orgao = ["ESTADO", "SECRETARIA", "PERICIA", "DEFESA", "REPUBLICA", "SSP", "POLICIA", "SEGURANCA", "INSTITUTO", "GOVERNO", "FEDERAL", "CIVIL", "IDENTIFICACAO"]
         termos_rejeitados = ["COORDENADORIA", "HUMANA", "BIOMETRICA", "CARTEIRA", "NACIONAL"]
-        
+       
         for t in textos_originais[:30]:
             t_sem_acento = self._remover_acentos(t)
             if any(p in t_sem_acento for p in termos_orgao) and not any(ex in t_sem_acento for ex in termos_rejeitados):
@@ -174,25 +174,25 @@ class RG(Documento):
         for i, t in enumerate(textos_originais):
             t_num = t.translate(mapa_ocr_numeros).replace('.', '')
             matches_rg = re.finditer(r'\b(\d{5,11})\s*[-]?\s*([0-9X])?\b', t_num)
-            
+           
             for m in matches_rg:
                 num_completo = m.group(1) + (m.group(2) if m.group(2) else "")
                 apenas_num = m.group(1)
-                
+               
                 eh_cpf = self.cpf and (apenas_num in self.cpf.replace('.', '').replace('-', ''))
-    
+   
                 eh_data = any(apenas_num in d['data'].replace('/', '') for d in todas_datas)
-                
-    
+               
+   
                 if not eh_cpf and not eh_data and len(apenas_num) >= 5:
                     idx_inicio = max(0, i-3)
                     idx_fim = min(len(textos_originais), i+4)
                     contexto = " ".join(textos_originais[idx_inicio:idx_fim]).upper()
-                    
+                   
                     peso = 0
                     if "REGISTRO" in contexto or "GERAL" in contexto or "IDENTIDADE" in contexto: peso += 10
                     if len(num_completo) >= 8: peso += 5
-                    
+                   
                     candidatos_rg.append({'num': num_completo, 'peso': peso})
 
         if candidatos_rg:
@@ -204,15 +204,15 @@ class RG(Documento):
         def eh_lixo(texto: str) -> bool:
             if len(texto) < 3: return True
             t_upper = re.sub(r'[^\w\s]', '', self._remover_acentos(texto)).upper()
-            
+           
 
             fatais = [
-                "SECRETARIA", "SEGURANCA", "PUBLICA", "PERICIA", "FORENSE", 
-                "COORDENADORIA", "IDENTIFICACAO", "BIOMETRICA", "VALIDA", "TERRITORIO", 
+                "SECRETARIA", "SEGURANCA", "PUBLICA", "PERICIA", "FORENSE",
+                "COORDENADORIA", "IDENTIFICACAO", "BIOMETRICA", "VALIDA", "TERRITORIO",
                 "REGISTRO", "GERAL", "REPUBLICA", "FEDERATIVA", "BRASIL", "ESTADO",
                 "ASSINATURA", "DIRETOR", "POLEGAR", "PLASTIFICAR", "PROIBIDO", "MINISTERIO",
                 "DATA", "EXPEDICAO", "DEFESA", "SOCIAL", "GOVERNO", "DOCUMENTO",
-                "NASOIME", "IMENI", "MENI", "CARTEIRA", "EMISSAO", "DIREITO", 
+                "NASOIME", "IMENI", "MENI", "CARTEIRA", "EMISSAO", "DIREITO",
                 "ESQUERDO", "LEI", "VIA", "CPF", "ORIGEM", "MUNICIPIO",
                 "NACION", "DAFES", "DEFES", "SOCI", "TERRITO", "SSP", "DETRAN", "POLICIA"
             ]
@@ -235,31 +235,31 @@ class RG(Documento):
             t_upper_raw = re.sub(r'[^\w\s]', '', t_limpo)
 
 
-            if re.search(r'\b(N[O0D]ME|NAME|NDME|HOME|HDME)', t_upper_raw): 
+            if re.search(r'\b(N[O0D]ME|NAME|NDME|HOME|HDME)', t_upper_raw):
                 estado_atual = 'NOME'
-            elif re.search(r'\b(FILI|FILA|ILIAC|FLIAC|FLLJ|PAI|MAE)', t_upper_raw): 
+            elif re.search(r'\b(FILI|FILA|ILIAC|FLIAC|FLLJ|PAI|MAE)', t_upper_raw):
                 estado_atual = 'FILIACAO'
-            elif re.search(r'\b(NATU|LOCAL|MUNIC)', t_upper_raw): 
+            elif re.search(r'\b(NATU|LOCAL|MUNIC)', t_upper_raw):
                 estado_atual = 'NATURALIDADE'
             elif re.search(r'\b(DOC|ORIGEM|CPF|REGIST|ASSIN|DATA|LEI|VALID|NASC|POLEG)', t_upper_raw):
-                if estado_atual in ['NOME', 'FILIACAO']: 
+                if estado_atual in ['NOME', 'FILIACAO']:
                     estado_atual = 'OUTRO'
 
             conteudo_limpo = limpar_linha(t_orig)
-            
+           
             if conteudo_limpo and not eh_lixo(conteudo_limpo):
                 if estado_atual == 'NOME':
-                    if conteudo_limpo not in linhas_nome: 
+                    if conteudo_limpo not in linhas_nome:
                         linhas_nome.append(conteudo_limpo)
                 elif estado_atual == 'FILIACAO':
                     if not any(conteudo_limpo == n for n in linhas_nome) and conteudo_limpo not in linhas_filiacao:
                         linhas_filiacao.append(conteudo_limpo)
                 elif estado_atual == 'NATURALIDADE':
-                    if conteudo_limpo not in linhas_naturalidade: 
+                    if conteudo_limpo not in linhas_naturalidade:
                         linhas_naturalidade.append(conteudo_limpo)
 
         if linhas_nome: self.nome_candidato = " ".join(linhas_nome)
-        
+       
         if linhas_filiacao:
             if len(linhas_filiacao) >= 2:
                 meio = len(linhas_filiacao) // 2
@@ -277,7 +277,7 @@ class RG(Documento):
                 match_nat = re.search(fr'\b([A-Z\s]{{3,}}?)\s*[-/]*\s*({ufs})\b', t_limpo)
                 if match_nat:
                     cand_nat = f"{match_nat.group(1).strip()}-{match_nat.group(2)}"
-        
+       
                     if not eh_lixo(self._remover_acentos(cand_nat.replace('-', ' '))):
                         self.naturalidade = cand_nat
                         break
@@ -308,3 +308,4 @@ class RG(Documento):
             "nome_pai": self.nome_pai,
             "nome_mae": self.nome_mae,
         }
+

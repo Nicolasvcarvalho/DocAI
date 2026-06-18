@@ -358,6 +358,7 @@ Exemplo:
   "dados_corrigidos": {
     "nome": "João Silva",
     "cpf": "12345678900",
+    "rg": "2345678"
     "data_nascimento": "2000-01-01",
     "nome_pai": "José Silva",
     "nome_mae": "Maria Silva"

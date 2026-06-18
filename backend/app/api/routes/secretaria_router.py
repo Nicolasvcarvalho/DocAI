@@ -30,6 +30,7 @@ from app.services.secretaria.validators.candidatura_lock_validator import Candid
 from app.services.secretaria.candidatura_lock_service import CandidaturaLockService
 from app.services.secretaria.presenters.assumir_candidatura_presenter import AssumirCandidaturaPresenter
 from app.services.secretaria.analise_documento_service import AnaliseDocumentoService
+from app.services.secretaria.lock_guard_service import LockGuardService
 
 router = APIRouter(prefix="/secretaria", tags=["Secretaria Dashboard"])
 
@@ -442,9 +443,8 @@ def visualizar_documento(documento_id: int, db: Session = Depends(get_db), secre
         raise HTTPException(status_code=404, detail="Documento não encontrado")
     
     candidatura = documento.candidatura
-
-    CandidaturaLockValidator.validar(candidatura, secretaria)
-
+    LockGuardService.validar_e_renovar(db, candidatura, secretaria)
+    
     return DocumentoAnaliseService.obter_documento_para_analise(documento)
 
 
@@ -717,13 +717,15 @@ def visualizar_documento(documento_id: int, db: Session = Depends(get_db), secre
 )
 def visualizar_arquivo(arquivo_id: int, db: Session = Depends(get_db), secretaria=Depends(get_secretaria_logada)):
 
-    arquivo = ArquivoDocumentoRepository.buscar_por_id(db, arquivo_id)
-
+    arquivo = ArquivoDocumentoRepository.buscar_por_id(db, arquivo_id) 
+      
     if not arquivo:
         raise HTTPException(status_code=404, detail="Arquivo não encontrado")
+    
+    candidatura = arquivo.versao_documento.documento.candidatura
+    LockGuardService.validar_e_renovar(db, candidatura, secretaria)
 
-    candidatura = ArquivoVisualizacaoValidator.validar(arquivo)
-    CandidaturaLockValidator.validar(candidatura, secretaria)
+    ArquivoVisualizacaoValidator.validar(arquivo)
 
     return ArquivoVisualizacaoService.visualizar(arquivo)
 
@@ -780,9 +782,13 @@ def listar_documentos_candidatura(candidatura_id: int, db: Session = Depends(get
 def aprovar_documento(documento_id: int, db: Session = Depends(get_db), secretaria=Depends(get_secretaria_logada)):
 
     documento = DocumentoRepository.buscar_por_id(db, documento_id)
-
+    
     if not documento:
         raise HTTPException(status_code=404, detail="Documento não encontrado")
+    
+    candidatura = documento.candidatura
+    LockGuardService.validar_e_renovar(db, candidatura, secretaria)
+
 
     return AnaliseDocumentoService.aprovar(db=db, documento=documento, secretaria=secretaria)
 
@@ -801,7 +807,10 @@ def solicitar_correcao(
     documento = DocumentoRepository.buscar_por_id(db, documento_id)
 
     if not documento:
-        raise HTTPException(status_code=404, detail="Documento não encontrado")
+        raise HTTPException(status_code=404, detail="Documento não encontrado")    
+    
+    candidatura = documento.candidatura
+    LockGuardService.validar_e_renovar(db, candidatura, secretaria)
 
     return AnaliseDocumentoService.solicitar_correcao(
         db=db,

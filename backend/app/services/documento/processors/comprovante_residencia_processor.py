@@ -19,11 +19,11 @@ class ComprovanteResidenciaProcessor(DocumentoProcessor):
         extensao_arquivo = Path(arquivos.arquivo.filename).suffix.lower()
         caminho_arquivo = pasta/f"comprovante{extensao_arquivo}"
 
-        path_arquivo = FileStorageService.salvar_arquivo(arquivo=arquivos.arquivo, caminho=caminho_arquivo)
+        FileStorageService.salvar_arquivo(arquivo=arquivos.arquivo, caminho=caminho_arquivo)
 
         ArquivoDocumentoRepository.criar(db=db, dados=ArquivoDocumentoCreateSchema(
             versao_documento_id=versao_documento.id,
             lado=Lado.UNICO,
-            file_path=str(path_arquivo),
+            file_path=str(caminho_arquivo),
             mime_type=arquivos.arquivo.content_type
         ))

@@ -57,7 +57,7 @@ class AnaliseDocumentoService:
         dados = AnaliseDocumentoCreateSchema(
             versao_documento_id=documento.versao_atual_id,
             secretaria_id=secretaria.id,
-            status=StatusAnalise.REPROVADO,
+            status=StatusAnalise.REJEITADO,
             motivo=motivo
         )
         

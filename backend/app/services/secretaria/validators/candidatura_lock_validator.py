@@ -10,7 +10,4 @@ class CandidaturaLockValidator:
             raise HTTPException(status_code=403, detail="Candidatura não foi assumida")
 
         if candidatura.locked_by_id != secretaria.id:
-            raise HTTPException(status_code=403, detail="Candidatura está sob responsabilidade de outra secretaria")
-        
-        CandidaturaLockService.renovar_lock(candidatura, secretaria)
-        
+            raise HTTPException(status_code=403, detail="Candidatura está sob responsabilidade de outra secretaria")   

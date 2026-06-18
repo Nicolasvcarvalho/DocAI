@@ -31,7 +31,10 @@ class CandidaturaWorkflowService:
             if StatusDocumento.EM_ANALISE in status_presentes:
                 return StatusCandidatura.EM_ANALISE if candidatura.possui_analista else StatusCandidatura.DOCUMENTACAO_PENDENTE
             
-            if StatusDocumento.APROVADO == status_presentes:
+            if status_presentes == {StatusDocumento.APROVADO}:
                 return StatusCandidatura.APROVADA
             
+            if StatusDocumento.APROVADO in status_presentes:
+                return StatusCandidatura.EM_ANALISE
+
             raise ValueError(f"Status de documentos não mapeado: {status_presentes}")

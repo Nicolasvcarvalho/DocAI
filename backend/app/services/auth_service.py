@@ -6,7 +6,7 @@ from app.models.candidatura import Candidatura
 from app.enums.status_candidatura import StatusCandidatura
 from app.enums.tipo_usuario import TipoUsuario
 
-from app.core.security import gerar_hash, verificar_senha, criar_acess_token
+from app.core.security import gerar_hash, verificar_senha, criar_access_token, criar_refresh_token, decodificar_token
 
 from app.repositories.usuario_repository import UsuarioRepository
 from app.repositories.candidatura_repository import CandidaturaRepository
@@ -70,11 +70,18 @@ class AuthService:
 
         if not senha_valida:
             raise HTTPException(status_code=401, detail="Email ou senha inválidos")
+        
+        payload = {
+            "sub": str(usuario.id),
+            "tipo_usuario": usuario.tipo_usuario.value
+        }
 
-        token = criar_acess_token({"sub": str(usuario.id), "tipo_usuario": usuario.tipo_usuario.value})
+        access_token = criar_access_token(payload)
+        refresh_token = criar_refresh_token(payload)
 
         return {
-            "access_token": token,
+            "access_token": access_token,
+            "refresh_token": refresh_token,
             "token_type": "bearer",
             "usuario": UsuarioAutenticadoResponse(
                 id=usuario.id,
@@ -83,4 +90,22 @@ class AuthService:
                 tipo_usuario=usuario.tipo_usuario
             )
         }
+    
+    @staticmethod
+    def refresh(refresh_token: str):
+
+        payload = decodificar_token(refresh_token)
+
+        if payload.get("type") != "refresh":
+            raise HTTPException(status_code=401, detail="Refresh token inválido")
             
+        novo_access_token = criar_access_token({
+            "sub": payload["sub"],
+            "tipo_usuario": payload["tipo_usuario"]
+        })
+
+        return {
+            "access_token": novo_access_token,
+            "token_type": "bearer"
+        }
+        

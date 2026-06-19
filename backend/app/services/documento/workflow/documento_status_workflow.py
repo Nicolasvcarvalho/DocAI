@@ -6,7 +6,6 @@ from app.enums.status_documento import StatusDocumento
 
 from app.services.candidatura_status_service import CandidaturaStatusService
 
-from sqlalchemy.orm import Session
 
 class DocumentoStatusWorkflow:
     
@@ -55,13 +54,13 @@ class DocumentoStatusWorkflow:
             raise HTTPException(status_code=400, detail=f"Transição de status inválida: {status_atual} -> {novo_status}")
         
     @staticmethod
-    def transicionar_status_documento(db: Session, documento: Documento, novo_status: StatusDocumento):
+    def transicionar_status_documento(documento: Documento, novo_status: StatusDocumento):
 
         DocumentoStatusWorkflow._validar_transicao(documento.status, novo_status)
 
         documento.status = novo_status
 
-        CandidaturaStatusService.sincronizar(db, documento.candidatura)
+        CandidaturaStatusService.sincronizar(documento.candidatura)
 
     @staticmethod
     def validar_reenvio(documento: Documento):

@@ -7,14 +7,10 @@ from app.services.documento.workflow.candidatura_workflow import CandidaturaWork
 class CandidaturaStatusService:
 
     @staticmethod
-    def sincronizar(db: Session, candidatura: Candidatura):
+    def sincronizar(candidatura: Candidatura):
 
         novo_status = CandidaturaWorkflowService.recalcular_status_candidatura(candidatura)
 
         candidatura.status = novo_status
-
-        db.commit()
-
-        db.refresh(candidatura)
 
         return candidatura

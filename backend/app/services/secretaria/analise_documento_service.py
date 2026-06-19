@@ -10,6 +10,7 @@ from app.services.documento.workflow.documento_status_workflow import DocumentoS
 from app.services.documento.workflow.candidatura_workflow import CandidaturaWorkflowService
 from app.services.secretaria.candidatura_lock_service import CandidaturaLockService
 from app.services.secretaria.validators.candidatura_lock_validator import CandidaturaLockValidator
+from app.services.documento.dados_oficiais_service import DadosOficiaisService
 
 class AnaliseDocumentoService:
 
@@ -27,11 +28,12 @@ class AnaliseDocumentoService:
         AnaliseDocumentoRepository.criar(db, dados)
 
         DocumentoStatusWorkflow.transicionar_status_documento(
-            db=db,
             documento=documento,
             novo_status=StatusDocumento.APROVADO
         )
             
+        DadosOficiaisService.persistir(db, documento)
+
         novo_status = CandidaturaWorkflowService.recalcular_status_candidatura(candidatura)
         
         candidatura.status = novo_status
@@ -64,7 +66,6 @@ class AnaliseDocumentoService:
         AnaliseDocumentoRepository.criar(db, dados)
 
         DocumentoStatusWorkflow.transicionar_status_documento(
-            db=db,
             documento=documento,
             novo_status=StatusDocumento.AGUARDANDO_REENVIO
         )

@@ -120,7 +120,7 @@ class DocumentoService:
         processor.processar_upload(db=db, documento=documento, versao_documento=versao_documento, arquivos=arquivos)
 
         documento.versao_atual_id = versao_documento.id
-        DocumentoStatusWorkflow.transicionar_status_documento(db, documento, StatusDocumento.ENVIADO)
+        DocumentoStatusWorkflow.transicionar_status_documento(documento, StatusDocumento.ENVIADO)
 
         db.commit()
 

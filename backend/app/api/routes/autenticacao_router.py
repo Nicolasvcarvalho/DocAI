@@ -5,7 +5,7 @@ from app.core.database import get_db
 
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app.schemas.auth_schema import CandidatoCreate, CandidatoCreateResponse, LoginRequest, LoginResponse
+from app.schemas.auth_schema import CandidatoCreate, CandidatoCreateResponse, LoginRequest, LoginResponse, RefreshTokenRequest, RefreshTokenResponse
 from app.schemas.base import HTTPErrorResponse
 
 from app.services.auth_service import AuthService
@@ -413,6 +413,11 @@ responses={
 def login(dados: LoginRequest, db: Session = Depends(get_db)):
     
     return AuthService.login(db, dados)
+
+@router.post("/refresh", response_model=RefreshTokenResponse)
+def refresh_token(dados: RefreshTokenRequest):
+
+    return AuthService.refresh(dados.refresh_token)
 
 
 @router.post(

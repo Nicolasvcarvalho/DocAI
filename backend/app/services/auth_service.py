@@ -6,7 +6,7 @@ from app.models.candidatura import Candidatura
 from app.enums.status_candidatura import StatusCandidatura
 from app.enums.tipo_usuario import TipoUsuario
 
-from app.core.security import gerar_hash, verificar_senha, criar_access_token, criar_refresh_token, decodificar_token
+from app.core.security import gerar_hash, verificar_senha, criar_access_token, criar_refresh_token, decodificar_token, validar_tipo_token
 
 from app.repositories.usuario_repository import UsuarioRepository
 from app.repositories.candidatura_repository import CandidaturaRepository
@@ -96,8 +96,7 @@ class AuthService:
 
         payload = decodificar_token(refresh_token)
 
-        if payload.get("type") != "refresh":
-            raise HTTPException(status_code=401, detail="Refresh token inválido")
+        validar_tipo_token(payload, "refresh")
             
         novo_access_token = criar_access_token({
             "sub": payload["sub"],

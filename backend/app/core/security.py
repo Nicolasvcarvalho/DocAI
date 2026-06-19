@@ -1,5 +1,7 @@
+from fastapi import HTTPException
+
 from datetime import datetime, timedelta, timezone
-from jose import jwt
+from jose import jwt, JWTError, ExpiredSignatureError
 from passlib.context import CryptContext
 
 pwd_context = CryptContext(
@@ -57,8 +59,22 @@ def criar_refresh_token(data: dict):
 
 def decodificar_token(token: str):
 
-    return jwt.decode(
-        token,
-        SECRET_KEY,
-        algorithms=[ALGORITHM]
-    )
+    try:
+        return jwt.decode(
+            token,
+            SECRET_KEY,
+            algorithms=[ALGORITHM]
+        )
+    
+    except ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="token expirado")
+        
+    except JWTError:
+        raise HTTPException(status_code=401, detail="token inválido")
+    
+def validar_tipo_token(payload: dict, tipo_esperado: str):
+
+    tipo = payload.get("type")
+
+    if tipo != tipo_esperado:
+        raise HTTPException(status_code=401, detail=f"{tipo_esperado.capitalize()} token inválido")

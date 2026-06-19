@@ -8,3 +8,5 @@ from .analise_documento import AnaliseDocumento
 from .ocr_resultado import OCRResultado
 from .versao_documento import VersaoDocumento
 from .arquivo_documento import ArquivoDocumento
+from .dados_identificacao import DadosIdentificacao
+from .dados_residencia import DadosResidencia

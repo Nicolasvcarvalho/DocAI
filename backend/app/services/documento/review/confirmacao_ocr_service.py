@@ -14,7 +14,7 @@ class ConfirmacaoOCRService:
 
         OCRReviewService.atualizar_dados_ocr(db=db, documento=documento, dados_corrigidos=dados_corrigidos)
 
-        DocumentoStatusWorkflow.transicionar_status_documento(db=db, documento=documento, novo_status=StatusDocumento.EM_ANALISE)
+        DocumentoStatusWorkflow.transicionar_status_documento(documento=documento, novo_status=StatusDocumento.EM_ANALISE)
 
         db.commit()
 

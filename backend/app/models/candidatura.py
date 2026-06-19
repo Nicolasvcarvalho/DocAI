@@ -19,6 +19,8 @@ class Candidatura(Base):
     candidato = relationship("Candidato", foreign_keys=[candidato_id])
     locked_by = relationship("Secretaria", foreign_keys=[locked_by_id])
     documentos = relationship("Documento", back_populates="candidatura")
+    dados_identificacao = relationship("DadosIdentificacao", uselist=False, back_populates="candidatura")
+    dados_residencia = relationship("DadosResidencia", uselist=False, back_populates="candidatura")
 
     @property
     def possui_analista(self):

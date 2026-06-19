@@ -21,7 +21,7 @@ class OCRTasks:
             if not versao_documento:
                 return
             
-            DocumentoStatusWorkflow.transicionar_status_documento(db=db, documento=versao_documento.documento, novo_status=StatusDocumento.PROCESSANDO)
+            DocumentoStatusWorkflow.transicionar_status_documento(documento=versao_documento.documento, novo_status=StatusDocumento.PROCESSANDO)
             
             db.commit()
 

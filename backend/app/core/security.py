@@ -27,7 +27,7 @@ def criar_access_token(data: dict):
 
     dados = data.copy()
 
-    expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
     dados.update({
         "exp": expire,

@@ -21,11 +21,11 @@ class CandidaturaDesistenciaService:
 
         CandidaturaRepository.liberar_lock(candidatura)
 
-        candidatura.status = CandidaturaWorkflowService.recalcular_stasttus_candidatura(candidatura)
+        candidatura.status = CandidaturaWorkflowService.recalcular_status_candidatura(candidatura)
 
         db.commit()
 
-        db.refresh()
+        db.refresh(candidatura)
 
         return DesistirAnaliseResponse(
             candidatura_id=candidatura.id,

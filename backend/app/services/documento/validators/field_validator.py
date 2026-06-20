@@ -25,10 +25,10 @@ class FieldValidator:
     @classmethod
     def validar_cpf(cls, cpf: str):
 
+        if re.search(r"[^0-9.-]", cpf):
+            raise HTTPException(status_code=400, detail="CPF contém caracteres inválidos")
+        
         cpf = cls.limpar_numeros(cpf)
-
-        if not cpf.isdigit():
-            raise HTTPException(status_code=400, detail="CPF deve conter apenas números")
 
         if len(cpf) != 11:
             raise HTTPException(status_code=400, detail="CPF deve possuir 11 dígitos")
@@ -87,6 +87,9 @@ class FieldValidator:
     
     @classmethod
     def validar_cep(cls, cep: str):
+
+        if re.search(r"[^0-9-]", cep):
+            raise HTTPException(status_code=400, detail="CEP contém caracteres inválidos")
 
         cep = cls.limpar_numeros(cep)
 

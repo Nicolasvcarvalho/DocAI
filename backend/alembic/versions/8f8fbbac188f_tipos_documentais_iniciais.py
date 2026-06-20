@@ -1,8 +1,8 @@
-"""seed tipos documento
+"""tipos documentais iniciais
 
-Revision ID: f25f44d431e0
-Revises: f5a43775109f
-Create Date: 2026-06-13 04:54:40.436066
+Revision ID: 8f8fbbac188f
+Revises: 164399dd5ee8
+Create Date: 2026-06-20 12:36:33.889486
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'f25f44d431e0'
-down_revision: Union[str, Sequence[str], None] = 'f5a43775109f'
+revision: str = '8f8fbbac188f'
+down_revision: Union[str, Sequence[str], None] = '164399dd5ee8'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

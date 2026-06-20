@@ -5,7 +5,7 @@ from app.enums.status_candidatura import StatusCandidatura
 from app.services.secretaria.validators.candidatura_assumir_validator import CandidaturaAssumirValidator
 from app.services.documento.workflow.candidatura_workflow import CandidaturaWorkflowService
 
-from datetime import datetime, UTC, timedelta
+from datetime import datetime, timedelta
 
 class CandidaturaLockService:
 
@@ -59,7 +59,7 @@ class CandidaturaLockService:
 
         if candidatura.status in [
             StatusCandidatura.APROVADA,
-            StatusCandidatura.AGUARDANDO_DOCUMENTOS,
+            StatusCandidatura.CORRECAO_SOLICITADA,
         ]:
 
             CandidaturaRepository.liberar_lock(candidatura)

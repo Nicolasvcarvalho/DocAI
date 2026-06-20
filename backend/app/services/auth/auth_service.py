@@ -16,10 +16,14 @@ from app.services.documento.documento_service import DocumentoService
 
 from app.schemas.auth_schema import UsuarioAutenticadoResponse
 
+from app.services.auth.validators.candidato_validator import CandidatoValidator
+
 class AuthService:
 
     @staticmethod
     def criar_candidato(db, dados):
+
+        CandidatoValidator.validar(dados)
 
         if UsuarioRepository.buscar_email(db, dados.email):
             raise HTTPException(status_code=400, detail="Email já cadastrado")

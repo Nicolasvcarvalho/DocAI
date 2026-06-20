@@ -8,7 +8,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from app.schemas.auth_schema import CandidatoCreate, CandidatoCreateResponse, LoginRequest, LoginResponse, RefreshTokenRequest, RefreshTokenResponse
 from app.schemas.base import HTTPErrorResponse
 
-from app.services.auth_service import AuthService
+from app.services.auth.auth_service import AuthService
 
 router = APIRouter(prefix="/autenticacao", tags=["Autenticacao"])
 

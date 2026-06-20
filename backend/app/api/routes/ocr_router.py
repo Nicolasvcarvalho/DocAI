@@ -93,9 +93,12 @@ router = APIRouter(prefix="/ocr", tags=["OCR"])
 
         ```json
         {
-        "nome": "João Silva",
-        "cpf": "12345678900",
-        "rg": "1234567"
+        "nome": "João da Silva",
+        "rg": "123456789",
+        "cpf": "123.456.789-09",
+        "data_nascimento": "1990-05-15",
+        "nome_pai": "José da Silva",
+        "nome_mae": "Maria Aparecida da Silva"
         }
         ```
 
@@ -275,67 +278,20 @@ def buscar_dados_ocr(documento_id: int, db: Session = Depends(get_db), usuario=D
         "/documentos/{documento_id}/confirmar",
         summary="Confirmar ou corrigir dados extraídos pelo OCR",
         description=dedent("""
-Permite que o candidato revisar, corrigir e confirmar os dados extraídos automaticamente pelo OCR.
-
-Após a confirmação, o documento é enviado para análise da secretaria e a candidatura é sincronizada automaticamente.
-
----
-
-## Objetivo da rota
-
-A rota é responsável por:
-
-* validar acesso ao documento;
-* validar os dados informados;
-* atualizar o resultado OCR;
-* alterar o status do documento;
-* sincronizar o status da candidatura.
-
----
-
-## Quando utilizar
-
-Esta rota deve ser utilizada quando o documento estiver no status:
-
-```text
-AGUARDANDO_CONFIRMACAO
-```
-
----
-
-## Fluxo da operação
-
-```text
-Upload
-↓
-OCR
-↓
-AGUARDANDO_CONFIRMACAO
-↓
-Confirmação do candidato
-↓
-EM_ANALISE
-```
-
----
-
-## Controle de acesso
-
-### Candidato
-
-Pode acessar apenas documentos pertencentes à própria candidatura.
-
----
-
 ## Validação dos dados
 
-Os campos obrigatórios variam conforme o tipo documental.
+Os campos obrigatórios e as regras de validação dependem do tipo documental.
+
+O backend valida todos os dados antes de permitir que o documento siga para análise da secretaria.
+
+---
 
 ### Documento de Identificação
 
 Campos obrigatórios:
 
 * nome
+* rg
 * cpf
 * data_nascimento
 * nome_pai
@@ -347,14 +303,26 @@ Exemplo:
 {
   "dados_corrigidos": {
     "nome": "João Silva",
-    "cpf": "12345678900",
-    "rg": "2345678"
+    "cpf": "123.456.789-09",
+    "rg": "1234567",
     "data_nascimento": "2000-01-01",
     "nome_pai": "José Silva",
     "nome_mae": "Maria Silva"
   }
 }
 ```
+
+Regras aplicadas:
+
+* todos os campos são obrigatórios;
+* CPF deve possuir 11 dígitos válidos;
+* CPF aceita apenas números, pontos e hífen;
+* CPF passa por validação dos dígitos verificadores;
+* RG deve possuir entre 5 e 14 caracteres;
+* data deve estar no formato `YYYY-MM-DD`;
+* data não pode estar no futuro.
+
+---
 
 ### Comprovante de Residência
 
@@ -381,8 +349,83 @@ Exemplo:
   }
 }
 ```
+
+Regras aplicadas:
+
+* todos os campos são obrigatórios;
+* CEP deve possuir 8 dígitos;
+* CEP aceita apenas números e hífen;
+* UF deve ser uma sigla válida de estado brasileiro.
+
+UFs aceitas:
+
+```text
+AC AL AP AM BA
+CE DF ES GO MA
+MT MS MG PA PB
+PR PE PI RJ RN
+RS RO RR SC SP
+SE TO
+```
+
+---
+
+## Possíveis erros de validação
+
+Exemplos de erros retornados pelo backend:
+
+```json
+{
+  "detail": "CPF inválido"
+}
+```
+
+```json
+{
+  "detail": "CPF deve possuir 11 dígitos"
+}
+```
+
+```json
+{
+  "detail": "RG deve possuir entre 5 e 14 caracteres"
+}
+```
+
+```json
+{
+  "detail": "Formato de data inválido"
+}
+```
+
+```json
+{
+  "detail": "Data de nascimento não pode estar no futuro"
+}
+```
+
+```json
+{
+  "detail": "CEP deve possuir 8 dígitos"
+}
+```
+
+```json
+{
+  "detail": "UF inválida"
+}
+```
+
+```json
+{
+  "detail": "Campo 'cpf' é obrigatório"
+}
+```
+
+Os erros são retornados com status HTTP `400 Bad Request`.
 """),
     responses={
+
     200: {
         "description": (
             "Dados OCR confirmados com sucesso."
@@ -410,6 +453,78 @@ Exemplo:
                         "value": {
                             "detail": (
                                 "Campo obrigatório vazio: logradouro"
+                            )
+                        }
+                    },
+
+                    "CPF Invalido": {
+                        "value": {
+                            "detail": (
+                                "CPF inválido"
+                            )
+                        }
+                    },
+
+                    "CPF Tamanho": {
+                        "value": {
+                            "detail": (
+                                "CPF deve possuir 11 dígitos"
+                            )
+                        }
+                    },
+
+                    "CPF Caracteres": {
+                        "value": {
+                            "detail": (
+                                "CPF contém caracteres inválidos"
+                            )
+                        }
+                    },
+
+                    "RG Invalido": {
+                        "value": {
+                            "detail": (
+                                "RG deve possuir entre 5 e 14 caracteres"
+                            )
+                        }
+                    },
+
+                    "Data Invalida": {
+                        "value": {
+                            "detail": (
+                                "Formato de data inválido"
+                            )
+                        }
+                    },
+
+                    "Data Futuro": {
+                        "value": {
+                            "detail": (
+                                "Data de nascimento não pode estar no futuro"
+                            )
+                        }
+                    },
+
+                    "CEP Invalido": {
+                        "value": {
+                            "detail": (
+                                "CEP deve possuir 8 dígitos"
+                            )
+                        }
+                    },
+
+                    "CEP Caracteres": {
+                        "value": {
+                            "detail": (
+                                "CEP contém caracteres inválidos"
+                            )
+                        }
+                    },
+
+                    "UF Invalida": {
+                        "value": {
+                            "detail": (
+                                "UF inválida"
                             )
                         }
                     },
@@ -502,7 +617,7 @@ Exemplo:
             }
         }
     }
-    }
+}
 )
 def confirmar_ocr(documento_id: int, dados: ConfirmacaoOCRSchema, db: Session = Depends(get_db), usuario=Depends(get_candidato_logado)):
 

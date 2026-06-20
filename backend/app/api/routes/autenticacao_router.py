@@ -17,143 +17,303 @@ router = APIRouter(prefix="/autenticacao", tags=["Autenticacao"])
     response_model=CandidatoCreateResponse,
     summary="Criar conta de candidato",
     description="""
-Cria uma nova conta de candidato na plataforma.
-
-Além do cadastro do usuário, a rota realiza toda a preparação inicial
-necessária para o processo documental.
-
----
-
-## Objetivos da rota
-
-A rota é responsável por:
-
-- criar o usuário
-- criar o candidato
-- criar a candidatura
-- calcular os documentos obrigatórios
-- gerar os registros documentais iniciais
-
-Toda a estrutura inicial é criada automaticamente pelo backend.
-
----
-
-## Fluxo de criação
-
-Fluxo executado pelo backend:
-
-```text
-Recebe dados do candidato
-↓
-Cria usuário
-↓
-Cria candidato
-↓
-Cria candidatura
-↓
-Calcula documentos obrigatórios
-↓
-Gera documentos pendentes
-↓
-Retorna dados do candidato
-```
-
----
-
 ## Estrutura da requisição
 
 ```json
 {
   "nome": "Nicolas",
   "sobrenome": "Carvalho",
+  "data_nascimento": "2000-05-15",
+  "sexo": "MASCULINO",
   "email": "nicolas@email.com",
-  "senha": "123456"
+  "senha": "Senha123"
 }
 ```
 
 ---
 
-## Resposta de sucesso
+## Regras de validação
+
+### Nome
+
+Requisitos:
+
+* obrigatório;
+* mínimo de 2 caracteres;
+* não pode conter apenas espaços;
+* aceita apenas letras e espaços.
+
+Exemplos válidos:
+
+```text
+Nicolas
+João Pedro
+Maria Clara
+```
+
+Exemplos inválidos:
+
+```text
+""
+"   "
+N1colas
+João123
+@Maria
+```
+
+---
+
+### Sobrenome
+
+Requisitos:
+
+* obrigatório;
+* mínimo de 2 caracteres;
+* não pode conter apenas espaços;
+* aceita apenas letras e espaços.
+
+---
+
+### Data de nascimento
+
+Requisitos:
+
+* não pode estar no futuro;
+* idade mínima de 17 anos.
+
+Exemplos inválidos:
+
+```text
+2030-01-01
+```
+
+```text
+Data correspondente a candidato com menos de 17 anos
+```
+
+---
+
+### Email
+
+Requisitos:
+
+* deve possuir formato válido de e-mail;
+* não pode estar previamente cadastrado.
+
+O backend normaliza automaticamente o valor:
+
+```text
+Remove espaços nas extremidades
+Converte para letras minúsculas
+```
 
 Exemplo:
 
-```json
-{
-  "id": 1,
-  "nome": "Nicolas",
-  "sobrenome": "Carvalho",
-  "email": "nicolas@email.com",
-  "tipo_usuario": "CANDIDATO",
-  "mensagem": "Candidato criado com sucesso"
-}
+```text
+"  Nicolas@Email.COM "
+↓
+"nicolas@email.com"
 ```
 
 ---
 
-## Campos retornados
+### Senha
 
-### id
+Requisitos:
 
-Identificador do candidato criado.
+* mínimo de 8 caracteres;
+* deve possuir pelo menos uma letra;
+* deve possuir pelo menos um número.
 
----
-
-### tipo_usuario
-
-Perfil institucional associado à conta criada.
-
-Atualmente sempre retorna:
+Exemplos válidos:
 
 ```text
-CANDIDATO
+Senha123
+Teste2025
+abc12345
+```
+
+Exemplos inválidos:
+
+```text
+12345678
+abcdefgh
+1234567
 ```
 
 ---
 
-### mensagem
+## Possíveis erros de validação
 
-Mensagem informando que o cadastro foi concluído com sucesso.
-
----
-
-## Exemplo de resposta
+### Email já cadastrado
 
 ```json
 {
-  "id": 1,
-  "nome": "Nicolas",
-  "sobrenome": "Carvalho",
-  "email": "nicolas@email.com",
-  "tipo_usuario": "CANDIDATO",
-  "mensagem": "Candidato criado com sucesso"
+  "detail": "Email já cadastrado"
 }
 ```
+
+### Nome inválido
+
+```json
+{
+  "detail": "Nome contém caracteres inválidos"
+}
+```
+
+### Sobrenome inválido
+
+```json
+{
+  "detail": "Sobrenome contém caracteres inválidos"
+}
+```
+
+### Data de nascimento futura
+
+```json
+{
+  "detail": "Data de nascimento não pode estar no futuro"
+}
+```
+
+### Idade mínima não atendida
+
+```json
+{
+  "detail": "Idade mínima permitida é 17 anos"
+}
+```
+
+### Senha inválida
+
+```json
+{
+  "detail": "Senha deve possuir pelo menos 8 caracteres"
+}
+```
+
+```
+
 """,
-    responses={
+responses={
 
-        200: {
-            "model": CandidatoCreateResponse,
-            "description": (
-                "Candidato criado com sucesso."
-            )
-        },
+    200: {
+        "model": CandidatoCreateResponse,
+        "description": (
+            "Candidato criado com sucesso."
+        )
+    },
 
-        400: {
-            "model": HTTPErrorResponse,
-            "description": (
-                "Erro de validação de dados."
-            ),
-            "content": {
-                "application/json": {
-                    "example": {
-                        "detail": (
-                            "Email já cadastrado"
-                        )
+    400: {
+        "model": HTTPErrorResponse,
+        "description": (
+            "Erro de validação dos dados informados."
+        ),
+        "content": {
+            "application/json": {
+                "examples": {
+
+                    "Email Ja Cadastrado": {
+                        "value": {
+                            "detail": (
+                                "Email já cadastrado"
+                            )
+                        }
+                    },
+
+                    "Nome Obrigatorio": {
+                        "value": {
+                            "detail": (
+                                "Nome é obrigatório"
+                            )
+                        }
+                    },
+
+                    "Nome Curto": {
+                        "value": {
+                            "detail": (
+                                "Nome deve possuir pelo menos 2 caracteres"
+                            )
+                        }
+                    },
+
+                    "Nome Invalido": {
+                        "value": {
+                            "detail": (
+                                "Nome contém caracteres inválidos"
+                            )
+                        }
+                    },
+
+                    "Sobrenome Obrigatorio": {
+                        "value": {
+                            "detail": (
+                                "Sobrenome é obrigatório"
+                            )
+                        }
+                    },
+
+                    "Sobrenome Curto": {
+                        "value": {
+                            "detail": (
+                                "Sobrenome deve possuir pelo menos 2 caracteres"
+                            )
+                        }
+                    },
+
+                    "Sobrenome Invalido": {
+                        "value": {
+                            "detail": (
+                                "Sobrenome contém caracteres inválidos"
+                            )
+                        }
+                    },
+
+                    "Data Futuro": {
+                        "value": {
+                            "detail": (
+                                "Data de nascimento não pode estar no futuro"
+                            )
+                        }
+                    },
+
+                    "Idade Minima": {
+                        "value": {
+                            "detail": (
+                                "Idade mínima permitida é 17 anos"
+                            )
+                        }
+                    },
+
+                    "Senha Curta": {
+                        "value": {
+                            "detail": (
+                                "Senha deve possuir pelo menos 8 caracteres"
+                            )
+                        }
+                    },
+
+                    "Senha Sem Letra": {
+                        "value": {
+                            "detail": (
+                                "Senha deve possuir ao menos uma letra"
+                            )
+                        }
+                    },
+
+                    "Senha Sem Numero": {
+                        "value": {
+                            "detail": (
+                                "Senha deve possuir ao menos um número"
+                            )
+                        }
                     }
                 }
             }
         }
     }
+}
 )
 def salvar_candidato(dados: CandidatoCreate, db: Session = Depends(get_db)):
     

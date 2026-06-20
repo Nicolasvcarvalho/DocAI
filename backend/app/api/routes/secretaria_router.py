@@ -1638,7 +1638,238 @@ def solicitar_correcao(
 
 @router.post(
     "/candidaturas/{candidatura_id}/desistir",
-    response_model=DesistirAnaliseResponse
+    response_model=DesistirAnaliseResponse,
+    summary="desistir da analise",
+    description=dedent("""
+Permite que uma secretaria abandone voluntariamente a análise de uma candidatura previamente assumida.
+
+A operação remove imediatamente o lock institucional da candidatura,
+tornando-a novamente disponível para análise por qualquer secretaria.
+
+---
+
+## Objetivo da rota
+
+A rota é responsável por:
+
+* validar a existência da candidatura;
+* validar a posse do lock;
+* liberar a candidatura;
+* recalcular o status institucional;
+* disponibilizar novamente a candidatura para análise.
+
+---
+
+## Fluxo operacional
+
+```text
+Secretaria assume candidatura
+↓
+Secretaria inicia análise
+↓
+Secretaria decide abandonar análise
+↓
+POST /secretaria/candidaturas/{candidatura_id}/desistir
+↓
+Lock removido
+↓
+Status recalculado
+↓
+Candidatura volta para fila institucional
+```
+
+---
+
+## O que acontece com os documentos
+
+A desistência NÃO desfaz decisões já tomadas.
+
+Exemplos:
+
+### Documento aprovado
+
+```text
+EM_ANALISE
+↓
+APROVADO
+↓
+Secretaria desiste
+```
+
+Resultado:
+
+```text
+Documento continua APROVADO
+```
+
+---
+
+### Correção solicitada
+
+```text
+EM_ANALISE
+↓
+AGUARDANDO_REENVIO
+↓
+Secretaria desiste
+```
+
+Resultado:
+
+```text
+Documento continua AGUARDANDO_REENVIO
+```
+
+---
+
+### Documento ainda não analisado
+
+```text
+EM_ANALISE
+```
+
+Resultado:
+
+```text
+Permanece EM_ANALISE
+```
+
+---
+
+## O que acontece com a candidatura
+
+Após a remoção do lock o sistema recalcula automaticamente o status.
+
+Exemplos:
+
+### Existem documentos pendentes de análise
+
+```text
+EM_ANALISE
+↓
+DOCUMENTACAO_PENDENTE
+```
+
+A candidatura volta para a fila institucional.
+
+---
+
+### Existe documento aguardando correção
+
+```text
+CORRECAO_SOLICITADA
+```
+
+Permanece aguardando ação do candidato.
+
+---
+
+### Todos os documentos aprovados
+
+```text
+APROVADA
+```
+
+Permanece aprovada.
+
+---
+
+## Regras de acesso
+
+A rota é exclusiva para secretarias autenticadas.
+
+Além disso:
+
+* a candidatura deve existir;
+* a candidatura deve estar assumida;
+* a candidatura deve pertencer à secretaria autenticada.
+
+---
+
+## Resposta de sucesso
+
+Exemplo:
+
+```json
+{
+  "candidatura_id": 30,
+  "status_candidatura": "DOCUMENTACAO_PENDENTE",
+  "mensagem": "Análise abandonada com sucesso"
+}
+```
+
+---
+
+## Observações
+
+A operação remove apenas a responsabilidade institucional da candidatura.
+
+Nenhum histórico é apagado.
+
+Nenhuma decisão documental é revertida.
+
+A desistência afeta exclusivamente o lock de análise.
+"""),
+responses={
+
+    200: {
+        "description": (
+            "Análise abandonada com sucesso."
+        )
+    },
+
+    401: {
+        "model": HTTPErrorResponse,
+        "description": (
+            "Usuário não autenticado."
+        )
+    },
+
+    403: {
+        "model": HTTPErrorResponse,
+        "description": (
+            "Secretaria não possui acesso à candidatura."
+        ),
+        "content": {
+            "application/json": {
+                "examples": {
+
+                    "NaoAssumida": {
+                        "value": {
+                            "detail": (
+                                "Candidatura não foi assumida"
+                            )
+                        }
+                    },
+
+                    "OutraSecretaria": {
+                        "value": {
+                            "detail": (
+                                "Candidatura está sob responsabilidade de outra secretaria"
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    },
+
+    404: {
+        "model": HTTPErrorResponse,
+        "description": (
+            "Candidatura não encontrada."
+        ),
+        "content": {
+            "application/json": {
+                "example": {
+                    "detail": (
+                        "Candidatura não encontrada"
+                    )
+                }
+            }
+        }
+    }
+}
 )
 def desistir_analise(candidatura_id: int, db: Session = Depends(get_db), secretaria=Depends(get_secretaria_logada)):
 

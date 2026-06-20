@@ -25,7 +25,7 @@ class ProgressoDocumentalResponse(BaseModel):
     total: int
     enviados: int
     aprovados: int
-    rejeitados: int
+    aguardando_reenvio: int
     percentual: int
 
 class CandidaturaDashboardResponse(BaseModel):

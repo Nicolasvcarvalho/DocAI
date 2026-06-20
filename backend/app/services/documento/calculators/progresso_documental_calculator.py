@@ -39,7 +39,7 @@ class ProgressoDocumentalCalculator:
             "total": total,
             "enviados": enviados,
             "aprovados": aprovados,
-            "rejeitados": precisam_reenvio,
+            "aguardando_reenvio": precisam_reenvio,
             "reenviados": reenviados,
             "percentual": percentual
         }

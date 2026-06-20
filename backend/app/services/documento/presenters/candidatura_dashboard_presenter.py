@@ -4,6 +4,8 @@ from app.services.documento.workflow.candidatura_workflow import CandidaturaWork
 from app.services.documento.calculators.progresso_documental_calculator import ProgressoDocumentalCalculator
 from app.services.documento.permissions.DocumentoActionService import DocumentoPermissionService
 
+from app.enums.status_documento import StatusDocumento
+
 class CandidaturaDashboardPresenter:
 
     @staticmethod
@@ -14,12 +16,19 @@ class CandidaturaDashboardPresenter:
 
         documentos = []
         for documento in candidatura.documentos:
+
+            motivo_rejeicao = None
+
+            if documento.status == StatusDocumento.AGUARDANDO_REENVIO and documento.versao_atual and documento.versao_atual.analise:
+
+                motivo_rejeicao = documento.versao_atual.analise.motivo
             
             documentos.append({
                 "id": documento.id,
                 "nome": documento.tipo_documento.nome,
                 "tipo_documento_id": documento.tipo_documento.id,
                 "status": documento.status,
+                "motivo_rejeicao": motivo_rejeicao,
                 "aceita_frente_verso": documento.tipo_documento.exige_frente_verso,
                 "acoes": DocumentoPermissionService.obter_acoes_permitidas(documento)
             })            

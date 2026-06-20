@@ -16,6 +16,7 @@ from app.schemas.secretaria.documento_analise_response import DocumentoAnaliseRe
 from app.schemas.secretaria.assumir_candidatura_schema import AssumirCandidaturaResponse
 from app.schemas.secretaria.candidatura_documentos_schema import CandidaturaDocumentosResponse
 from app.schemas.secretaria.analise_documento_schema import AnaliseDocumentoResponse, SolicitarCorrecaoInput
+from app.schemas.secretaria.desistir_analise_schema import DesistirAnaliseResponse
 
 from app.models.usuario import Usuario
 
@@ -31,6 +32,7 @@ from app.services.secretaria.candidatura_lock_service import CandidaturaLockServ
 from app.services.secretaria.presenters.assumir_candidatura_presenter import AssumirCandidaturaPresenter
 from app.services.secretaria.analise_documento_service import AnaliseDocumentoService
 from app.services.secretaria.lock_guard_service import LockGuardService
+from app.services.secretaria.candidatura_desistencia_service import CandidaturaDesistenciaService
 
 router = APIRouter(prefix="/secretaria", tags=["Secretaria Dashboard"])
 
@@ -1633,3 +1635,20 @@ def solicitar_correcao(
         secretaria=secretaria,
         motivo=dados.motivo
     )
+
+@router.post(
+    "/candidaturas/{candidatura_id}/desistir",
+    response_model=DesistirAnaliseResponse
+)
+def desistir_analise(candidatura_id: int, db: Session = Depends(get_db), secretaria=Depends(get_secretaria_logada)):
+
+    candidatura = CandidaturaRepository.buscar_por_id(db, candidatura_id)
+
+    if not candidatura:
+        raise HTTPException(status_code=404, detail="Candidatura não encontrada")
+
+    return CandidaturaDesistenciaService.desistir(
+            db=db,
+            candidatura=candidatura,
+            secretaria=secretaria
+        )

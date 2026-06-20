@@ -20,7 +20,7 @@ class SecretariaDashboardService:
 
             status = CandidaturaWorkflowService.recalcular_status_candidatura(candidatura)
             progresso = ProgressoDocumentalCalculator.calcular(candidatura)
-            possui_reenvio = (progresso.get("reenviados") > 1)
+            possui_reenvio = (progresso.get("reenviados") > 0)
 
             resultado.append({
                 "id": candidatura.id,

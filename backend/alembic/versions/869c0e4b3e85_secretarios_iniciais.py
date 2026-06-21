@@ -1,8 +1,8 @@
-"""secretarios inicias
+"""secretarios iniciais
 
-Revision ID: ccc26896d2f3
-Revises: 8f8fbbac188f
-Create Date: 2026-06-20 12:37:25.734791
+Revision ID: 869c0e4b3e85
+Revises: 3e1b405d5ec5
+Create Date: 2026-06-20 22:47:03.272419
 
 """
 from typing import Sequence, Union
@@ -11,10 +11,9 @@ from alembic import op
 import sqlalchemy as sa
 from datetime import date
 
-
 # revision identifiers, used by Alembic.
-revision: str = 'ccc26896d2f3'
-down_revision: Union[str, Sequence[str], None] = '8f8fbbac188f'
+revision: str = '869c0e4b3e85'
+down_revision: Union[str, Sequence[str], None] = '3e1b405d5ec5'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

@@ -1,5 +1,6 @@
 from app.models.ocr_resultado import OCRResultado
 from app.models.versao_documento import VersaoDocumento
+from app.models.documento import Documento
 
 from app.schemas.ocr_schema import OCRResultadoCreateSchema, OCRResultadoUpdateSchema
 
@@ -30,5 +31,8 @@ class OCRResultadoRepository:
     @staticmethod
     def buscar_por_documento(db, documento_id: int):
 
-        return db.query(OCRResultado).join(VersaoDocumento).filter(VersaoDocumento.documento_id==documento_id).first()
+        documento = db.query(Documento).filter(Documento.id == documento_id).first()
+        
+        return db.query(OCRResultado).filter(OCRResultado.versao_documento_id == documento.versao_atual_id).first()
+        
     

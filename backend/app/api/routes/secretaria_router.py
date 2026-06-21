@@ -1611,7 +1611,24 @@ responses={
                 }
             }
         }
+    },
+
+    422: {
+    "description": "Erro de validação dos dados enviados.",
+    "content": {
+        "application/json": {
+            "example": {
+                "detail": [
+                    {
+                        "type": "value_error",
+                        "loc": ["body", "motivo"],
+                        "msg": "Value error, Motivo é obrigatório"
+                    }
+                ]
+            }
+        }
     }
+}
 }
 )
 def solicitar_correcao(

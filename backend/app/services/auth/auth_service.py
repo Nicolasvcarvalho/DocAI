@@ -31,8 +31,8 @@ class AuthService:
         senha_hash = gerar_hash(dados.senha)
 
         candidato = Candidato(
-            nome=dados.nome,
-            sobrenome=dados.sobrenome,
+            nome=dados.nome.lower(),
+            sobrenome=dados.sobrenome.lower(),
             data_nascimento=dados.data_nascimento,
             sexo=dados.sexo,
             email=dados.email,

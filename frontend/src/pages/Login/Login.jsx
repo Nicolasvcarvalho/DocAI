@@ -92,7 +92,7 @@ function Login() {
     try {
       const resposta = await api.post('/autenticacao/login', { email, senha });
 
-      const { access_token, usuario } = resposta.data;
+      const { access_token, refresh_token, usuario } = resposta.data;
 
       localStorage.setItem('token', access_token);
       localStorage.setItem('refresh_token', refresh_token);

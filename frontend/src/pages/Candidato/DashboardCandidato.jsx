@@ -309,12 +309,12 @@ const styles = {
 };
 
 const statusCandidaturaConfig = {
-  AGUARDANDO_DOCUMENTOS:         { cor: '#93c5fd', fundo: '#0c1f3b', texto: '📋 Aguardando documentos' },
-  DOCUMENTACAO_EM_PROCESSAMENTO: { cor: '#fde68a', fundo: '#2d2006', texto: '⏳ Documentação em processamento' },
-  DOCUMENTACAO_PENDENTE:         { cor: '#fde68a', fundo: '#2d2006', texto: '⚠️ Documentação pendente' },
-  EM_ANALISE:                    { cor: '#c4b5fd', fundo: '#1e1040', texto: '🔍 Em análise' },
-  APROVADA:                      { cor: '#86efac', fundo: '#0f2e1a', texto: '✅ Candidatura aprovada' },
-  INDEFERIDA:                    { cor: '#fca5a5', fundo: '#3b1515', texto: '❌ Candidatura indeferida' },
+  AGUARDANDO_DOCUMENTOS:         { cor: '#93c5fd', fundo: '#0c1f3b', texto: 'Aguardando documentos' },
+  DOCUMENTACAO_EM_PROCESSAMENTO: { cor: '#fde68a', fundo: '#2d2006', texto: 'Documentação em processamento...' },
+  DOCUMENTACAO_PENDENTE:         { cor: '#fde68a', fundo: '#2d2006', texto: 'Documentação pendente' },
+  EM_ANALISE:                    { cor: '#c4b5fd', fundo: '#1e1040', texto: 'Em análise' },
+  APROVADA:                      { cor: '#86efac', fundo: '#0f2e1a', texto: 'Candidatura aprovada' },
+  INDEFERIDA:                    { cor: '#fca5a5', fundo: '#3b1515', texto: 'Candidatura indeferida' },
 };
 
 const statusConfig = {
@@ -322,10 +322,38 @@ const statusConfig = {
   PENDENTE_ENVIO:         { cor: '#93c5fd', fundo: '#0c1f3b', texto: 'Pendente envio' },
   ENVIADO:                { cor: '#c4b5fd', fundo: '#1e1040', texto: 'Enviado' },
   PROCESSANDO:            { cor: '#fde68a', fundo: '#2d2006', texto: 'Processando' },
-  AGUARDANDO_CONFIRMACAO: { cor: '#d8b4fe', fundo: '#2d1f4e', texto: 'Revisar OCR' },
+  AGUARDANDO_CONFIRMACAO: { cor: '#d8b4fe', fundo: '#2d1f4e', texto: 'Revisao' },
   EM_ANALISE:             { cor: '#c4b5fd', fundo: '#1e1040', texto: 'Em análise' },
   AGUARDANDO_REENVIO:     { cor: '#fca5a5', fundo: '#3b1515', texto: 'Aguard. reenvio' },
 };
+
+function formatarNomeDocumento(nomeCru) {
+  if (!nomeCru) return '';
+  
+  // 1. Substitui sublinhas por espaços
+  let nomeFormatado = nomeCru.replace(/_/g, ' ');
+  
+  // 2. Transforma tudo em minúsculo e deixa apenas a primeira letra em maiúscula
+  nomeFormatado = nomeFormatado.charAt(0).toUpperCase() + nomeFormatado.slice(1).toLowerCase();
+  
+  // 3. Dicionário de correções para aplicar acentuação manualmente
+  const correcoes = {
+    'residencia': 'Residência',
+    'identificacao': 'Identificação',
+    'comprovante': 'Comprovante',
+    'documento': 'Documento',
+  };
+
+  // 4. Aplica as correções de acento palavra por palavra
+  Object.keys(correcoes).forEach(palavraSemAcento => {
+    // Expressão regular para achar a palavra mesmo que ela esteja no meio do texto
+    const regex = new RegExp(`\\b${palavraSemAcento}\\b`, 'gi');
+    nomeFormatado = nomeFormatado.replace(regex, correcoes[palavraSemAcento]);
+  });
+
+  // 5. Garante que a primeira letra do bloco final continue maiúscula
+  return nomeFormatado.charAt(0).toUpperCase() + nomeFormatado.slice(1);
+}
 
 function DashboardCandidato() {
   const [dashboard, setDashboard] = useState(null);
@@ -393,9 +421,28 @@ function DashboardCandidato() {
   async function handleConfirmarOCR() {
     setConfirmandoOCR(true);
     try {
-      
+      // 1. Cria uma cópia dos dados para não alterar o que o usuário vê na tela enquanto envia
+      const dadosParaEnviar = { ...dadosEditados };
+
+      // 2. Mapeia as chaves para encontrar campos de data e convertê-los
+      Object.keys(dadosParaEnviar).forEach((campo) => {
+        const valor = dadosParaEnviar[campo];
+
+        // Verifica se é uma string e se está no formato brasileiro (ex: '15/05/2002')
+        if (typeof valor === 'string' && valor.includes('/')) {
+          const partes = valor.split('/');
+          
+          // Garante que a string possui os 3 blocos (DD, MM, AAAA) antes de converter
+          if (partes.length === 3) {
+            // Reorganiza para o formato inglês: 'AAAA-MM-DD'
+            dadosParaEnviar[campo] = `${partes[2]}-${partes[1]}-${partes[0]}`;
+          }
+        }
+      });
+
+      // 3. Envia os dados com as datas devidamente convertidas para o formato inglês
       await api.post(`/ocr/documentos/${docSelecionado.id}/confirmar`, {
-        dados_corrigidos: dadosEditados,
+        dados_corrigidos: dadosParaEnviar,
       });
 
       setFeedbackUpload({
@@ -447,7 +494,7 @@ function DashboardCandidato() {
       formData.append('tipo_documento_id', docSelecionado.tipo_documento_id);
       formData.append('arquivo', arquivo);
       await api.post('/documentos/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-      setFeedbackUpload({ tipo: 'sucesso', mensagem: `"${docSelecionado.nome}" enviado! Aguardando processamento OCR.` });
+      setFeedbackUpload({ tipo: 'sucesso', mensagem: `${formatarNomeDocumento(docSelecionado.nome)} enviado! Aguardando processamento OCR.` });
       buscarDashboard();
     } catch (error) {
       const mensagem = error.response?.data?.detail || 'Erro ao enviar documento.';
@@ -472,7 +519,7 @@ function DashboardCandidato() {
       formData.append('frente', arquivoFrente);
       formData.append('verso', arquivoVerso);
       await api.post('/documentos/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-      setFeedbackUpload({ tipo: 'sucesso', mensagem: `"${docSelecionado.nome}" enviado! Aguardando processamento OCR.` });
+      setFeedbackUpload({ tipo: 'sucesso', mensagem: `"${formatarNomeDocumento(docSelecionado.nome)}" enviado! Aguardando processamento OCR.` });
       buscarDashboard();
     } catch (error) {
       const mensagem = error.response?.data?.detail || 'Erro ao enviar documento.';
@@ -619,7 +666,7 @@ function DashboardCandidato() {
                 <p style={{ ...styles.resumoNumero, color: '#fde68a' }}>
                   {(dashboard.progresso.enviados || 0) - (dashboard.progresso.aprovados || 0) - (dashboard.progresso.aguardando_reenvio || 0)}
                 </p>
-                <p style={styles.resumoLabel}>Em análise</p>
+                <p style={styles.resumoLabel}>Enviados</p>
               </div>
               <div style={styles.resumoItem}>
                 <p style={{ ...styles.resumoNumero, color: '#fca5a5' }}>{dashboard.progresso.aguardando_reenvio || 0}</p>
@@ -629,12 +676,9 @@ function DashboardCandidato() {
             <div style={styles.progressoWrap}>
               <div style={styles.progressoTopo}>
                 <span style={styles.progressoTexto}>
-                  {dashboard.progresso.enviados} de {dashboard.progresso.total} documentos enviados
+                  {dashboard.progresso?.enviados ?? 0} de {dashboard.progresso?.total ?? 0} documentos enviados
                 </span>
-                <span style={styles.progressoPercent}>{dashboard.progresso.percentual}%</span>
-              </div>
-              <div style={styles.progressoBar}>
-                <div style={{ ...styles.progressoFill, width: `${dashboard.progresso.percentual}%` }} />
+      
               </div>
             </div>
           </div>
@@ -655,28 +699,53 @@ function DashboardCandidato() {
               const esteEnviando = enviando === doc.id;
 
               return (
-                <div key={doc.id} style={styles.docItem}>
-                  <span style={styles.docNome}>{doc.nome}</span>
+                <div key={doc.id} style={{ borderBottom: '1px solid #252836', padding: '14px 0' }}>
+                  
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+                    <span style={styles.docNome}>{formatarNomeDocumento(doc.nome)}</span>
 
-                  <span style={{ ...styles.badge, color: config.cor, backgroundColor: config.fundo }}>
-                    {config.texto}
-                  </span>
+                    {doc.status !== 'AGUARDANDO_CONFIRMACAO' && (
+                      <span style={{ ...styles.badge, color: config.cor, backgroundColor: config.fundo }}>
+                        {config.texto}
+                      </span>
+                    )}
 
-                  {podeConfirmarOCR && (
-                    <button style={styles.ocrBtn} onClick={() => handleAbrirOCR(doc)}>
-                      Revisar OCR
-                    </button>
+                    {podeConfirmarOCR && (
+                      <button style={styles.ocrBtn} onClick={() => handleAbrirOCR(doc)}>
+                        Revisar OCR
+                      </button>
+                    )}
+
+                    {podeEnviar && !podeConfirmarOCR && (
+                      <button
+                        style={{ ...styles.uploadBtn, ...(esteEnviando ? styles.btnDisabled : {}) }}
+                        disabled={esteEnviando}
+                        onClick={() => handleClicarEnviar(doc)}
+                      >
+                        {esteEnviando ? 'Enviando...' : doc.acoes?.pode_reenviar_documento ? 'Reenviar' : 'Enviar'}
+                      </button>
+                    )}
+                  </div>
+
+        
+                  {doc.status === 'AGUARDANDO_REENVIO' && doc.motivo_rejeicao && (
+                    <div style={{
+                      backgroundColor: '#2a1414',
+                      border: '1px solid #ef4444',
+                      borderRadius: '8px',
+                      padding: '12px 14px',
+                      marginTop: '12px',
+                      fontSize: '13px',
+                      color: '#fca5a5',
+                      lineHeight: '1.4'
+                    }}>
+                      <span style={{ fontWeight: '700', color: '#f87171', display: 'block', marginBottom: '4px' }}>
+                        Necessário Reenvio:
+                      </span>
+                      {doc.motivo_rejeicao}
+                    </div>
                   )}
 
-                  {podeEnviar && !podeConfirmarOCR && (
-                    <button
-                      style={{ ...styles.uploadBtn, ...(esteEnviando ? styles.btnDisabled : {}) }}
-                      disabled={esteEnviando}
-                      onClick={() => handleClicarEnviar(doc)}
-                    >
-                      {esteEnviando ? 'Enviando...' : doc.acoes?.pode_reenviar_documento ? 'Reenviar' : 'Enviar'}
-                    </button>
-                  )}
                 </div>
               );
             })}

@@ -365,15 +365,29 @@ function AnaliseCandidatura() {
     }
   }
 
-  async function handleAprovar() {
+async function handleAprovar() {
+    // 1. Bloqueia cliques duplos imediatamente
+    if (executando) return;
+    
     setExecutando(true);
     setFeedback({ tipo: '', mensagem: '' });
+    
     try {
-      const resposta = await api.post(`/secretaria/documentos/${docSelecionado.id}/aprovar`);
-      setFeedback({ tipo: 'sucesso', mensagem: resposta.data.mensagem || 'Documento aprovado!' });
-      buscarDocumentos(); 
+      const idAnalizado = docSelecionado?.id;
+      if (!idAnalizado) return;
+
+      // Executa o POST usando uma constante local isolada do estado
+      const resposta = await api.post(`/secretaria/documentos/${idAnalizado}/aprovar`);
+      
+      // 2. LIMPEZA ATÔMICA: Reseta as referências de memória na hora
       setDetalheDoc(null);
       setDocSelecionado(null);
+      setMotivoCorrecao('');
+      
+      setFeedback({ tipo: 'sucesso', mensagem: resposta.data.mensagem || 'Documento aprovado!' });
+      
+      // 3. Redireciona para o dashboard limpo
+      navigate('/dashboard-secretaria'); 
     } catch (error) {
       const mensagem = error.response?.data?.detail || 'Erro ao aprovar documento.';
       setFeedback({ tipo: 'erro', mensagem });
@@ -383,22 +397,29 @@ function AnaliseCandidatura() {
   }
 
   async function handleSolicitarCorrecao() {
-    if (!motivoCorrecao.trim()) return;
+    if (!motivoCorrecao.trim() || executando) return;
 
     setExecutando(true);
     setModalCorrecao(false);
     setFeedback({ tipo: '', mensagem: '' });
 
     try {
+      const idAnalizado = docSelecionado?.id;
+      if (!idAnalizado) return;
+
       const resposta = await api.post(
-        `/secretaria/documentos/${docSelecionado.id}/solicitar-correcao`,
+        `/secretaria/documentos/${idAnalizado}/solicitar-correcao`,
         { motivo: motivoCorrecao }
       );
-      setFeedback({ tipo: 'sucesso', mensagem: resposta.data.mensagem || 'Correção solicitada!' });
-      setMotivoCorrecao('');
-      buscarDocumentos();
+      
+      // 2. LIMPEZA ATÔMICA: Reseta as referências de memória na hora
       setDetalheDoc(null);
       setDocSelecionado(null);
+      setMotivoCorrecao('');
+      
+      setFeedback({ tipo: 'sucesso', mensagem: resposta.data.mensagem || 'Correção solicitada!' });
+      
+      navigate('/dashboard-secretaria');
     } catch (error) {
       const mensagem = error.response?.data?.detail || 'Erro ao solicitar correção.';
       setFeedback({ tipo: 'erro', mensagem });

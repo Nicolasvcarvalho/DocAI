@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../services/api';
 
@@ -8,6 +8,7 @@ const styles = {
     backgroundColor: '#0f1117',
     fontFamily: 'sans-serif',
     padding: '32px 24px',
+    boxSizing: 'border-box',
   },
   header: {
     display: 'flex',
@@ -45,18 +46,17 @@ const styles = {
     borderRadius: '8px',
     cursor: 'pointer',
     fontSize: '13px',
+    transition: 'all 0.2s',
   },
   layout: {
     display: 'flex',
     gap: '20px',
     alignItems: 'flex-start',
   },
-  // Coluna esquerda — lista de documentos
   colunaEsquerda: {
-    width: '260px',
+    width: '320px',
     flexShrink: 0,
   },
-  // Coluna direita — detalhe do documento selecionado
   colunaDireita: {
     flex: 1,
   },
@@ -83,6 +83,7 @@ const styles = {
     cursor: 'pointer',
     marginBottom: '6px',
     border: '1px solid transparent',
+    transition: 'all 0.2s',
   },
   docItemAtivo: {
     backgroundColor: '#1e3a5f',
@@ -98,30 +99,6 @@ const styles = {
     fontSize: '11px',
     fontWeight: '600',
   },
-  // Área de visualização do arquivo
-  areaImagem: {
-    backgroundColor: '#252836',
-    borderRadius: '10px',
-    padding: '16px',
-    marginBottom: '16px',
-    minHeight: '200px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '12px',
-  },
-  imagemDoc: {
-    width: '100%',
-    borderRadius: '8px',
-    objectFit: 'contain',
-    maxHeight: '400px',
-  },
-  ladoLabel: {
-    color: '#6b7280',
-    fontSize: '11px',
-    textTransform: 'uppercase',
-    marginBottom: '6px',
-  },
-  // Dados OCR
   ocrGrid: {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
@@ -144,7 +121,6 @@ const styles = {
     fontSize: '14px',
     fontWeight: '500',
   },
-  // Botões de ação
   acoesRow: {
     display: 'flex',
     gap: '12px',
@@ -175,7 +151,6 @@ const styles = {
     opacity: 0.4,
     cursor: 'not-allowed',
   },
-  // Modal de solicitação de correção
   modalOverlay: {
     position: 'fixed',
     top: 0, left: 0, right: 0, bottom: 0,
@@ -272,15 +247,13 @@ const statusConfig = {
 };
 
 function AnaliseCandidatura() {
-
   const { candidaturaId } = useParams();
   const navigate = useNavigate();
 
+  const [assumindoCandidatura, setAssumindoCandidatura] = useState(true);
   const [documentos, setDocumentos] = useState([]);
-  const [carregandoDocs, setCarregandoDocs] = useState(true);
-
+  const [carregandoDocs, setCarregandoDocs] = useState(false);
   const [docSelecionado, setDocSelecionado] = useState(null);
-
 
   const [detalheDoc, setDetalheDoc] = useState(null);
   const [carregandoDetalhe, setCarregandoDetalhe] = useState(false);
@@ -290,24 +263,78 @@ function AnaliseCandidatura() {
 
   const [modalCorreco, setModalCorrecao] = useState(false);
   const [motivoCorrecao, setMotivoCorrecao] = useState('');
-
   const [desistindo, setDesistindo] = useState(false);
 
-  async function buscarDocumentos() {
+  const buscarDocumentos = useCallback(async (ignorarLoadingVisual = false) => {
+    if (!ignorarLoadingVisual) setCarregandoDocs(true);
     try {
       const resposta = await api.get(`/secretaria/candidaturas/${candidaturaId}/documentos`);
       setDocumentos(resposta.data.documentos || []);
     } catch (error) {
-      setFeedback({ tipo: 'erro', mensagem: 'Erro ao carregar documentos.' });
+      setFeedback({ tipo: 'erro', mensagem: 'Erro ao carregar lista de documentos.' });
     } finally {
-      setCarregandoDocs(false);
+      if (!ignorarLoadingVisual) setCarregandoDocs(false);
+    }
+  }, [candidaturaId]);
+
+  // Função que baixa o arquivo com autenticação e abre em nova aba
+  async function handleVisualizarArquivo(arquivoId) {
+    try {
+      setExecutando(true);
+      
+      // Faz a requisição forçando o retorno em formato Blob (binário)
+      const resposta = await api.get(`/secretaria/arquivos/${arquivoId}`, {
+        responseType: 'blob'
+      });
+
+      // Cria uma URL temporária na memória do navegador contendo o arquivo (MIME-Type automático)
+      const urlBlob = window.URL.createObjectURL(new Blob([resposta.data], { type: resposta.headers['content-type'] }));
+      
+      // Abre o arquivo (Imagem ou PDF) de forma nativa em uma nova aba
+      window.open(urlBlob, '_blank');
+      
+      // Limpa a memória após um pequeno intervalo
+      setTimeout(() => window.URL.revokeObjectURL(urlBlob), 100);
+    } catch (error) {
+      console.error("Erro ao abrir arquivo:", error);
+      setFeedback({ tipo: 'erro', mensagem: 'Não foi possível carregar o arquivo original.' });
+    } finally {
+      setExecutando(false);
     }
   }
 
   useEffect(() => {
-    buscarDocumentos();
-  }, [candidaturaId]);
+    async function inicializarAnalise() {
+      try {
+        setAssumindoCandidatura(true);
+        setFeedback({ tipo: '', mensagem: '' });
+        
+        await buscarDocumentos(true);
+        
+      } catch (error) {
+        const statusErro = error.response?.status;
 
+        if (statusErro === 403) {
+          try {
+            await api.post(`/secretaria/candidaturas/${candidaturaId}/assumir`);
+            await buscarDocumentos(true);
+          } catch (erroAssumir) {
+            const detalhe = erroAssumir.response?.data?.detail || 'Esta candidatura já está sob responsabilidade de outro analista.';
+            setFeedback({ tipo: 'erro', mensagem: detalhe });
+          }
+        } else {
+          const detalheGeral = error.response?.data?.detail || 'Erro ao carregar os dados da candidatura.';
+          setFeedback({ tipo: 'erro', mensagem: detalheGeral });
+        }
+      } finally {
+        setAssumindoCandidatura(false);
+      }
+    }
+
+    if (candidaturaId) {
+      inicializarAnalise();
+    }
+  }, [candidaturaId, buscarDocumentos]);
 
   async function handleSelecionarDoc(doc) {
     setDocSelecionado(doc);
@@ -317,9 +344,22 @@ function AnaliseCandidatura() {
 
     try {
       const resposta = await api.get(`/secretaria/documentos/${doc.id}`);
-      setDetalheDoc(resposta.data);
+      let dadosSuporte = resposta.data;
+
+      // Tratamento crucial: Se o backend devolver o OCR como string de texto, faz o parse para objeto
+      if (dadosSuporte && typeof dadosSuporte.ocr === 'string') {
+        try {
+          dadosSuporte.ocr = JSON.parse(dadosSuporte.ocr);
+        } catch (e) {
+          console.error("Erro ao converter string OCR para objeto:", e);
+        }
+      }
+
+      setDetalheDoc(dadosSuporte);
     } catch (error) {
-      setFeedback({ tipo: 'erro', mensagem: 'Erro ao carregar documento.' });
+      console.error("Erro ao buscar detalhe do documento:", error);
+      const mensagem = error.response?.data?.detail || 'Erro ao carregar dados do documento.';
+      setFeedback({ tipo: 'erro', mensagem });
     } finally {
       setCarregandoDetalhe(false);
     }
@@ -331,7 +371,7 @@ function AnaliseCandidatura() {
     try {
       const resposta = await api.post(`/secretaria/documentos/${docSelecionado.id}/aprovar`);
       setFeedback({ tipo: 'sucesso', mensagem: resposta.data.mensagem || 'Documento aprovado!' });
-      buscarDocumentos(); // atualiza a lista
+      buscarDocumentos(); 
       setDetalheDoc(null);
       setDocSelecionado(null);
     } catch (error) {
@@ -341,7 +381,6 @@ function AnaliseCandidatura() {
       setExecutando(false);
     }
   }
-
 
   async function handleSolicitarCorrecao() {
     if (!motivoCorrecao.trim()) return;
@@ -369,41 +408,40 @@ function AnaliseCandidatura() {
   }
 
   async function handleDesistir() {
-  setDesistindo(true);
-  try {
-    await api.post(`/secretaria/candidaturas/${candidaturaId}/desistir`);
-    navigate('/dashboard-secretaria');
-  } catch (error) {
-    const mensagem = error.response?.data?.detail || 'Erro ao desistir da análise.';
-    setFeedback({ tipo: 'erro', mensagem });
-  } finally {
-    setDesistindo(false);
+    setDesistindo(true);
+    try {
+      await api.post(`/secretaria/candidaturas/${candidaturaId}/desistir`);
+      navigate('/dashboard-secretaria');
+    } catch (error) {
+      const mensagem = error.response?.data?.detail || 'Erro ao desistir da análise.';
+      setFeedback({ tipo: 'erro', mensagem });
+    } finally {
+      setDesistindo(false);
+    }
   }
-}
 
-  function urlArquivo(arquivoId) {
-    const token = localStorage.getItem('token');
-    return `${import.meta.env.VITE_API_URL}/secretaria/arquivos/${arquivoId}?token=${token}`;
+  if (assumindoCandidatura) {
+    return (
+      <div style={styles.page}>
+        <p style={styles.carregandoTexto}>Vinculando candidatura ao seu perfil de análise...</p>
+      </div>
+    );
   }
 
   return (
     <div style={styles.page}>
-
       <div style={styles.header}>
         <div style={styles.logo}>
           <div style={styles.logoIcon}>D</div>
           <span style={styles.logoText}>DocAI</span>
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
-          <button style={styles.voltarBtn} onClick={() => navigate('/dashboard-secretaria')}>
-            ← Voltar à fila
-          </button>
           <button
             style={{
               ...styles.voltarBtn,
               color: '#fca5a5',
               border: '1px solid #ef4444',
-              ...(desistindo ? { opacity: 0.4, cursor: 'not-allowed' } : {}),
+              ...(desistindo ? styles.btnDisabled : {}),
             }}
             disabled={desistindo}
             onClick={handleDesistir}
@@ -453,14 +491,13 @@ function AnaliseCandidatura() {
       )}
 
       <div style={styles.layout}>
-
         <div style={styles.colunaEsquerda}>
           <div style={styles.card}>
             <p style={styles.cardTitle}>Documentos</p>
 
             {carregandoDocs && <p style={styles.carregandoTexto}>Carregando...</p>}
 
-            {documentos.map((doc) => {
+            {!carregandoDocs && documentos.map((doc) => {
               const config = statusConfig[doc.status] || { cor: '#9ca3af', fundo: '#252836', texto: doc.status };
               const ativo = docSelecionado?.id === doc.id;
 
@@ -484,62 +521,94 @@ function AnaliseCandidatura() {
         </div>
 
         <div style={styles.colunaDireita}>
-
-          {!docSelecionado && (
+          {/* Caso 1: Nenhum documento selecionado e não está carregando */}
+          {!docSelecionado && !carregandoDetalhe && (
             <div style={{ ...styles.card, textAlign: 'center', padding: '60px' }}>
               <p style={{ color: '#6b7280', fontSize: '14px' }}>
-                Selecione um documento na lista ao lado para analisar.
+                Selecione um documento na lista ao lado para analisar os dados.
               </p>
             </div>
           )}
 
+          {/* Caso 2: Buscando dados no backend */}
           {carregandoDetalhe && (
-            <p style={styles.carregandoTexto}>Carregando documento...</p>
+            <p style={styles.carregandoTexto}>Carregando dados estruturados...</p>
           )}
 
+          {/* Caso 3: Dados carregados com sucesso */}
           {detalheDoc && !carregandoDetalhe && (
             <>
-            
-              <div style={styles.card}>
-                <p style={styles.cardTitle}>Arquivos enviados</p>
-                <div style={styles.areaImagem}>
-                  {detalheDoc.arquivos.map((arquivo) => (
-                    <div key={arquivo.id}>
-                      {arquivo.lado && (
-                        <p style={styles.ladoLabel}>{arquivo.lado}</p>
-                      )}
-                      <img
-                        src={urlArquivo(arquivo.id)}
-                        alt={arquivo.lado || 'Documento'}
-                        style={styles.imagemDoc}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {detalheDoc.ocr && Object.keys(detalheDoc.ocr).length > 0 && (
+              {detalheDoc?.ocr?.dados_json && Object.keys(detalheDoc.ocr.dados_json).length > 0 ? (
                 <div style={styles.card}>
-                  <p style={styles.cardTitle}>Dados extraídos pelo OCR</p>
+                  <p style={styles.cardTitle}>Dados do Candidato (Confirmados via OCR)</p>
+                  
+                
+                  {detalheDoc?.arquivos && detalheDoc.arquivos.length > 0 && (
+                    <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
+                      {detalheDoc.arquivos.map((arquivo) => (
+                        <button
+                          key={arquivo.id}
+                          type="button"
+                          disabled={executando}
+                          onClick={() => handleVisualizarArquivo(arquivo.id)}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            backgroundColor: '#1e293b',
+                            border: '1px solid #475569',
+                            color: '#e2e8f0',
+                            padding: '10px 16px',
+                            borderRadius: '8px',
+                            cursor: executando ? 'not-allowed' : 'pointer',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            opacity: executando ? 0.6 : 1
+                          }}
+                        >
+                          Documento Original {arquivo.lado ? `(${arquivo.lado})` : ''}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
                   <div style={styles.ocrGrid}>
-                    {Object.entries(detalheDoc.ocr).map(([chave, valor]) => (
-                      <div key={chave} style={styles.ocrItem}>
-                        <p style={styles.ocrChave}>{chave.replace(/_/g, ' ')}</p>
-                        <p style={styles.ocrValor}>{valor || '—'}</p>
-                      </div>
-                    ))}
+                    {Object.entries(detalheDoc.ocr.dados_json).map(([chave, valor]) => {
+                      let valorTexto = '—';
+                      if (valor !== null && valor !== undefined) {
+                        if (typeof valor === 'object') {
+                          valorTexto = JSON.stringify(valor);
+                        } else {
+                          valorTexto = String(valor);
+                        }
+                      }
+
+                      return (
+                        <div key={chave} style={styles.ocrItem}>
+                          <p style={styles.ocrChave}>{String(chave).replace(/_/g, ' ')}</p>
+                          <p style={styles.ocrValor}>{valorTexto}</p>
+                        </div>
+                      );
+                    })}
                   </div>
+                </div>
+              ) : (
+                <div style={styles.card}>
+                  <p style={{ color: '#6b7280', fontSize: '14px', textAlign: 'center' }}>
+                    Nenhum dado cadastral extraído para este documento.
+                  </p>
                 </div>
               )}
 
-              {detalheDoc.status === 'EM_ANALISE' && (
+              {/* Botões de Ação baseados no status da API */}
+              {(detalheDoc?.status === 'EM_ANALISE' || docSelecionado?.status === 'EM_ANALISE') && (
                 <div style={styles.acoesRow}>
                   <button
                     style={{ ...styles.aprovarBtn, ...(executando ? styles.btnDisabled : {}) }}
                     disabled={executando}
                     onClick={handleAprovar}
                   >
-                    {executando ? 'Processando...' : '✓ Aprovar documento'}
+                    {executando ? 'Processando...' : '✓ Aprovar dados'}
                   </button>
                   <button
                     style={{ ...styles.reprovarBtn, ...(executando ? styles.btnDisabled : {}) }}
